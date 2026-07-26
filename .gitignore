@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+.venv/
+ENV/
+
+# Datasets & Large Files (DO NOT PUSH TO GITHUB)
+*.edf
+*.csv
+*.npy
+*.h5
+*.pb
+*.onnx
+*.tflite
+*.pt
+*.pth
+data/raw/
+data/processed/
+ml/data/
+simulator/data/*.csv
+simulator/data/*.edf
+
+# Node / Web Frontend
+node_modules/
+.next/
+out/
+.nuxt/
+dist/
+*.log
+
+# Docker / Logs
+*.log
+docker-volumes/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Environment Variables
+.env
+!.env.example
