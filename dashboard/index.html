@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NeuroWatch AI | Live Monitoring</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @keyframes pulse-red {
+            0%, 100% { background-color: rgba(186, 26, 26, 0.05); border-color: rgba(186, 26, 26, 0.4); }
+            50% { background-color: rgba(186, 26, 26, 0.15); border-color: rgba(186, 26, 26, 0.8); }
+        }
+        .animate-seizure-pulse {
+            animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d9d9e5;
+            border-radius: 10px;
+        }
+        .waveform-path {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: dash 5s linear infinite;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: 0; }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-background": "#191b23",
+                        "surface": "#faf8ff",
+                        "primary-container": "#2563eb",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "secondary": "#006a63",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#e7e7f3",
+                        "on-primary-fixed": "#00174b",
+                        "outline-variant": "#c3c6d7",
+                        "on-primary-container": "#eeefff",
+                        "on-surface": "#191b23",
+                        "secondary-fixed-dim": "#80d5cb",
+                        "surface-container": "#ededf9",
+                        "on-surface-variant": "#434655",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#943700",
+                        "surface-bright": "#faf8ff",
+                        "surface-container-highest": "#e1e2ed",
+                        "primary": "#004ac6",
+                        "surface-container-low": "#f3f3fe",
+                        "surface-dim": "#d9d9e5",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed-variant": "#00504a",
+                        "outline": "#737686",
+                        "background": "#faf8ff",
+                        "surface-tint": "#0053db",
+                        "surface-variant": "#e1e2ed",
+                        "on-tertiary-container": "#ffede6",
+                        "inverse-surface": "#2e3039",
+                        "on-secondary-fixed": "#00201d",
+                        "secondary-fixed": "#9cf2e8",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb596",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f0f0fb",
+                        "inverse-primary": "#b4c5ff",
+                        "secondary-container": "#99efe5",
+                        "on-tertiary-fixed": "#360f00",
+                        "on-secondary-container": "#006f67",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#ffdbcd",
+                        "tertiary-container": "#bc4800",
+                        "on-tertiary-fixed-variant": "#7d2d00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "gutter": "20px",
+                        "md": "16px",
+                        "xl": "40px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "xs": "4px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-lg-mobile": ["Inter"],
+                        "mono-data": ["JetBrains Mono"],
+                        "title-sm": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "mono-data": ["13px", { "lineHeight": "18px", "fontWeight": "500" }],
+                        "title-sm": ["18px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-hidden">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col h-full py-lg px-md bg-surface-container-low dark:bg-surface-dim border-r border-outline-variant dark:border-outline z-50">
+<div class="mb-xl px-sm">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">NeuroWatch AI</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant opacity-75">Clinical EEG Monitor</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active: Live Monitoring -->
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer text-primary font-bold bg-primary-container/10" href="index.html"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitor_heart</span><span class="font-body-md text-body-md">Live Monitoring</span></a>
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="metrics.html"><span class="material-symbols-outlined">analytics</span><span class="font-body-md text-body-md">Metrics Dashboard</span></a>
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="patients.html"><span class="material-symbols-outlined">groups</span><span class="font-body-md text-body-md">Patients</span></a>
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="records.html"><span class="material-symbols-outlined">folder_open</span><span class="font-body-md text-body-md">Records</span></a>
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="model-management.html"><span class="material-symbols-outlined">precision_manufacturing</span><span class="font-body-md text-body-md">Model Management</span></a>
+</nav>
+<div class="mt-auto space-y-1 pt-lg border-t border-outline-variant">
+<div class="flex items-center gap-md p-md rounded-lg cursor-pointer active:scale-95 duration-150 transition-colors hover:bg-surface-container-high dark:hover:bg-surface-container-highest text-on-surface-variant">
+<span class="material-symbols-outlined">manage_accounts</span>
+<span class="font-body-md text-body-md">User Management</span>
+</div>
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="settings.html"><span class="material-symbols-outlined">settings</span><span class="font-body-md text-body-md">Settings</span></a>
+<div class="flex items-center gap-md p-md mt-lg cursor-pointer" onclick="window.location.href='{{DATA:SCREEN:SCREEN_2}}'">
+<img class="w-10 h-10 rounded-full border border-outline-variant object-cover" data-alt="A professional clinical portrait of a female neurologist wearing a white lab coat and a stethoscope, set against a blurred hospital background with soft blue lighting. The style is modern, sharp, and clean with a premium healthcare aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSZV2K5ZfXT7o4S0ArD6jZpqu4XiUqxwLWAoYezas0iCR9dyq4QRhzx3xTyKHQFJVrRdMK7X-HmGXVP50qZhiO_wvtREcf62yR0NS8-QncgVYSYVbDsKoHF43Czr6kcMdxAVCidIOexBCPjz1H5cNZCppwFsvrGhDY1KulutgSbpxakD5GKn0GCrq793FaTwYIHNxF10X2eaYKzakxboVqKk2tmSjJGZLmIxcPSvvU6bU1-hzebN7e0ieQiILae67pMMu-H8HbYwE"/>
+<div class="overflow-hidden">
+<p class="font-label-caps text-on-surface truncate">Dr. Sarah Chen</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-wider">Chief Neuro</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="flex justify-between items-center h-16 ml-64 px-lg w-[calc(100%-16rem)] bg-surface dark:bg-on-background sticky top-0 z-40 border-b border-outline-variant dark:border-outline shadow-sm">
+<div class="flex items-center gap-lg">
+<div class="flex items-center gap-md text-on-surface-variant font-mono-data text-mono-data">
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container rounded">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span>Time: 14:32:01</span>
+</div>
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container rounded">
+<span class="material-symbols-outlined text-[16px]">person</span>
+<span>Patients: 128</span>
+</div>
+<div class="flex items-center gap-xs px-sm py-1 bg-surface-container rounded">
+<span class="material-symbols-outlined text-[16px]">router</span>
+<span>Devices: 42</span>
+</div>
+<div class="flex items-center gap-xs px-sm py-1 bg-error-container text-on-error-container rounded font-bold animate-pulse">
+<span class="material-symbols-outlined text-[16px]">warning</span>
+<span>Alerts: 3</span>
+</div>
+<span class="text-outline text-xs opacity-60">v2.4.1-Edge</span>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center bg-surface-container-high rounded-full px-md py-1.5 gap-sm">
+<span class="material-symbols-outlined text-outline">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm w-48" placeholder="Search patients or rooms..." type="text"/>
+</div>
+<div class="flex items-center gap-xs">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors material-symbols-outlined">notifications</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors material-symbols-outlined">help</button>
+<a class="p-2 text-on-surface-variant hover:text-error transition-colors material-symbols-outlined" href="login.html">logout</a>
+</div>
+</div>
+</header>
+<!-- Main Content Layout -->
+<main class="ml-64 p-lg flex gap-lg h-[calc(100vh-64px)] overflow-hidden">
+<!-- Patients Grid -->
+<section class="flex-1 overflow-y-auto custom-scrollbar pr-xs">
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Active Monitoring</h2>
+<p class="text-on-surface-variant font-body-sm">Real-time EEG analysis from ICU Floor 4</p>
+</div>
+<div class="flex gap-sm">
+<button class="flex items-center gap-xs px-md py-1.5 bg-surface-container-highest rounded-lg text-body-sm font-medium hover:bg-outline-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]">filter_list</span> Filter
+                    </button>
+<button class="flex items-center gap-xs px-md py-1.5 bg-primary text-on-primary rounded-lg text-body-sm font-medium hover:opacity-90 transition-opacity shadow-md">
+<span class="material-symbols-outlined text-[18px]">add</span> Add Patient
+                    </button>
+</div>
+</div>
+<!-- Bento-style Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-md pb-xl">
+<!-- Card 1: Seizure Detected (CRITICAL) -->
+<div class="bg-surface-container-lowest border-2 border-error/40 rounded-xl p-md flex flex-col gap-md animate-seizure-pulse shadow-lg relative overflow-hidden group">
+<div class="flex justify-between items-start">
+<div class="flex gap-md">
+<div class="w-12 h-12 bg-error-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-error font-bold text-3xl">priority_high</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-error font-bold">John Doe</h3>
+<p class="text-on-surface-variant text-xs font-mono-data">ID: #EEG-8829 | Room 402-A</p>
+</div>
+</div>
+<div class="bg-error text-on-error text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Seizure Detected</div>
+</div>
+<div class="h-16 bg-on-background/5 rounded-lg flex items-center px-sm overflow-hidden">
+<svg class="w-full h-12" viewbox="0 0 400 100">
+<path class="waveform-path" d="M0 50 Q 10 10, 20 90 T 40 50 T 60 50 T 80 10 T 100 90 T 120 50 T 140 10 T 160 90 T 180 50 T 200 10 T 220 90 T 240 50 T 260 10 T 280 90 T 300 50 T 320 10 T 340 90 T 360 50 T 380 10 T 400 50" fill="none" stroke="#ba1a1a" stroke-width="2"></path>
+</svg>
+</div>
+<div class="grid grid-cols-2 gap-sm text-[11px] font-medium text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">stethoscope</span> Dr. Marcus Sterling
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">memory</span> Edge-Node 04 (Active)
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">battery_3_bar</span> Battery: 42%
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">update</span> Just now
+                        </div>
+</div>
+<button class="mt-xs w-full py-2 bg-error text-on-error rounded-lg font-bold text-sm uppercase tracking-wider hover:brightness-110 transition-all">Review Trace</button>
+</div>
+<!-- Card 2: Stable Monitoring -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-md hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<div class="flex gap-md">
+<div class="w-12 h-12 bg-surface-container-highest rounded-lg overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A macro close-up of a human eye with a sharp focus on the iris, showing complex textures. The lighting is medical-grade, clean, and bright, with a hint of blue clinical light. The overall mood is observational and high-tech." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEFeIK_eBdGE0H0CfG8k9YgXyhxbrcadO4jgALtdPshKN96j4jD4l64eOexyJ7Kpn3L6A9wjdFo8ieVXDfn0jC_nLRLKiZqB3Mcyi7S5UBPpLGRsYJxl6gwDPBUe4rrFJLAlzUz2VKB-UKFMR2sGJ3yGeEtzi_HSwDfFGfRHHk02MJYt5xL5HT2BsEZHrZo7gIlaWWMksrXXBto7LMch0izc1UGhO1zUuGkXlKr4ER-CQ12fQuuWh9bH63otbCfJny7A4KhrD_DIk"/>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-on-surface">Elena Rodriguez</h3>
+<p class="text-on-surface-variant text-xs font-mono-data">ID: #EEG-1102 | Room 415-B</p>
+</div>
+</div>
+<div class="bg-secondary/10 text-secondary text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Stable</div>
+</div>
+<div class="h-16 bg-surface-container rounded-lg flex items-center px-sm overflow-hidden opacity-60">
+<svg class="w-full h-10" viewbox="0 0 400 100">
+<path d="M0 50 L 20 50 L 30 45 L 40 55 L 50 50 L 100 50 L 110 40 L 120 60 L 130 50 L 200 50 L 210 48 L 220 52 L 230 50 L 300 50 L 310 30 L 320 70 L 330 50 L 400 50" fill="none" stroke="#2563eb" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="grid grid-cols-2 gap-sm text-[11px] font-medium text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">stethoscope</span> Dr. Sarah Chen
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">check_indeterminate_small</span> Edge-Node 12 (Active)
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">battery_full</span> Battery: 98%
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">update</span> 2m ago
+                        </div>
+</div>
+</div>
+<!-- Card 3: Monitoring / Warning -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-md hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<div class="flex gap-md">
+<div class="w-12 h-12 bg-surface-container-highest rounded-lg overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A clinical close-up of a senior man's face with white hair, focused on his forehead where transparent medical sensors are attached. The lighting is soft, diffused indoor hospital light. The style is clean, empathetic, and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCe3FjTRxl82gSJfHfiW5Xuv6CYKOWBH0tbMJkynlRDJdF6dFPDeeM0aX9U_veOW5jB6FMab-i3VOCPlkLA-yUea3-gxcDR6qicyIyTksY38F91BZlkKD5RH2Y4kflDw9dryQISklnao8ybio7b-ed6f_oiEQg1qyLeM-6s8NJwSMa7g87c9OARNSMk7tOVQ5GjFn1nw7KqzgM446zi2STerEB7KG3kBr7e7w-kThHQi4xIyoifVmwLxBxPkCGvsE_2785RNLvM8b0"/>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-on-surface">Samuel Thompson</h3>
+<p class="text-on-surface-variant text-xs font-mono-data">ID: #EEG-4456 | Room 408-A</p>
+</div>
+</div>
+<div class="bg-tertiary/10 text-tertiary text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Monitoring</div>
+</div>
+<div class="h-16 bg-surface-container rounded-lg flex items-center px-sm overflow-hidden">
+<svg class="w-full h-10" viewbox="0 0 400 100">
+<path d="M0 50 L 50 50 Q 60 20, 70 80 T 90 50 L 150 50 Q 160 30, 170 70 T 190 50 L 250 50 Q 260 20, 270 80 T 290 50 L 400 50" fill="none" stroke="#943700" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="grid grid-cols-2 gap-sm text-[11px] font-medium text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">stethoscope</span> Dr. Marcus Sterling
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">cloud</span> Fog-Sync 08
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">battery_5_bar</span> Battery: 76%
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">update</span> 12s ago
+                        </div>
+</div>
+</div>
+<!-- Card 4: Offline -->
+<div class="bg-surface-container/50 border border-outline-variant opacity-60 grayscale rounded-xl p-md flex flex-col gap-md">
+<div class="flex justify-between items-start">
+<div class="flex gap-md">
+<div class="w-12 h-12 bg-surface-dim rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">wifi_off</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-on-surface">Linda Wu</h3>
+<p class="text-on-surface-variant text-xs font-mono-data">ID: #EEG-2291 | Room 421-C</p>
+</div>
+</div>
+<div class="bg-outline/20 text-outline text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Offline</div>
+</div>
+<div class="h-16 bg-surface-dim rounded-lg flex items-center justify-center">
+<p class="text-xs font-medium text-outline uppercase tracking-widest">Signal Lost</p>
+</div>
+<div class="grid grid-cols-2 gap-sm text-[11px] font-medium text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">stethoscope</span> Dr. Sarah Chen
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">warning</span> Disconnected
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">battery_0_bar</span> Battery: 0%
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">update</span> 45m ago
+                        </div>
+</div>
+</div>
+<!-- Card 5: Stable -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-md hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<div class="flex gap-md">
+<div class="w-12 h-12 bg-surface-container-highest rounded-lg overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A high-quality clinical studio shot of a young adult female patient with a serene expression, slightly looking off-camera. The lighting is soft and bright with a white background. The visual style is premium healthcare marketing, clean and trustworthy." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtXqyjJ69QIpMDtRosdlrd2vvaI_Piflo_7uriRvQjlVb8ahXZ8VkKCFOZ22OZ7dNjacgRBTp7AsTEGMU5KDd96EUSU8Z8tYFpI4aMNnzTgLiVgyheTZ3Yf_e_QQK1V89SBghZpms8kslm9pETKGIiSHwvJeschxA4Ln1Wx7SP0MAekCr9l1k7I_lpyWrHfPqWs3siVA3z08FGaZvFHEo4BcP5wvMChEi0TDYwJccXBGywf9l33BjM3CQ-Ri_yooyWm4tZHPVD7PU"/>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-on-surface">Maya Patterson</h3>
+<p class="text-on-surface-variant text-xs font-mono-data">ID: #EEG-5012 | Room 410-A</p>
+</div>
+</div>
+<div class="bg-secondary/10 text-secondary text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Stable</div>
+</div>
+<div class="h-16 bg-surface-container rounded-lg flex items-center px-sm overflow-hidden opacity-60">
+<svg class="w-full h-10" viewbox="0 0 400 100">
+<path class="opacity-30" d="M0 50 L 400 50" stroke="#2563eb" stroke-dasharray="4 4" stroke-width="1"></path>
+<path d="M0 50 L 20 50 L 30 45 L 40 55 L 50 50 L 100 50 L 110 40 L 120 60 L 130 50 L 400 50" fill="none" stroke="#2563eb" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="grid grid-cols-2 gap-sm text-[11px] font-medium text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">stethoscope</span> Dr. Marcus Sterling
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">check_indeterminate_small</span> Edge-Node 15 (Active)
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">battery_full</span> Battery: 100%
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">update</span> 5m ago
+                        </div>
+</div>
+</div>
+<!-- Card 6: Monitoring -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md flex flex-col gap-md hover:shadow-md transition-shadow">
+<div class="flex justify-between items-start">
+<div class="flex gap-md">
+<div class="w-12 h-12 bg-surface-container-highest rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-outline text-3xl">account_circle</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-on-surface">Unknown Patient</h3>
+<p class="text-on-surface-variant text-xs font-mono-data">ID: #EEG-9901 | Room 402-B</p>
+</div>
+</div>
+<div class="bg-tertiary/10 text-tertiary text-[10px] font-bold px-2 py-1 rounded uppercase tracking-widest">Monitoring</div>
+</div>
+<div class="h-16 bg-surface-container rounded-lg flex items-center px-sm overflow-hidden">
+<svg class="w-full h-10" viewbox="0 0 400 100">
+<path d="M0 50 Q 20 20, 40 80 T 80 50 Q 100 10, 120 90 T 160 50 Q 180 30, 200 70 T 240 50 Q 260 20, 280 80 T 320 50 L 400 50" fill="none" stroke="#943700" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="grid grid-cols-2 gap-sm text-[11px] font-medium text-on-surface-variant">
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">stethoscope</span> On Call: Resident
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">check_indeterminate_small</span> Edge-Node 22
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">battery_3_bar</span> Battery: 55%
+                        </div>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-sm">update</span> 1m ago
+                        </div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Sidebar Event Feed -->
+<aside class="w-80 bg-surface-container-low border border-outline-variant rounded-xl flex flex-col shadow-sm">
+<div class="p-md border-b border-outline-variant bg-surface-container-high/50 rounded-t-xl">
+<div class="flex justify-between items-center">
+<h3 class="font-title-sm text-title-sm text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">history</span> Event Feed
+                    </h3>
+<span class="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">LIVE</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-md space-y-md">
+<!-- Event: Seizure -->
+<div class="flex gap-sm p-sm rounded-lg bg-error-container/30 border-l-4 border-error">
+<span class="material-symbols-outlined text-error text-[20px] shrink-0">report</span>
+<div>
+<p class="text-xs font-bold text-on-surface">Patient #EEG-8829</p>
+<p class="text-[11px] text-on-error-container font-medium">Seizure detected in Temporal Lobe (Left). Immediate review required.</p>
+<p class="text-[10px] text-on-surface-variant mt-1">14:31:58</p>
+</div>
+</div>
+<!-- Event: Model Update -->
+<div class="flex gap-sm p-sm rounded-lg bg-secondary-container/20 border-l-4 border-secondary">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0">update</span>
+<div>
+<p class="text-xs font-bold text-on-surface">System Update</p>
+<p class="text-[11px] text-on-secondary-container font-medium">AI Inference Model v4.8 deployed to Edge Node 04.</p>
+<p class="text-[10px] text-on-surface-variant mt-1">14:28:44</p>
+</div>
+</div>
+<!-- Event: New Patient -->
+<div class="flex gap-sm p-sm rounded-lg hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-outline text-[20px] shrink-0">person_add</span>
+<div>
+<p class="text-xs font-bold text-on-surface">Patient Admission</p>
+<p class="text-[11px] text-on-surface-variant">Maya Patterson added to Room 410-A. Sensor initialization complete.</p>
+<p class="text-[10px] text-on-surface-variant mt-1">14:25:12</p>
+</div>
+</div>
+<!-- Event: Device Alert -->
+<div class="flex gap-sm p-sm rounded-lg hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-tertiary text-[20px] shrink-0">battery_alert</span>
+<div>
+<p class="text-xs font-bold text-on-surface">Low Battery Warning</p>
+<p class="text-[11px] text-on-surface-variant">Edge-Node 04 battery level below 45%.</p>
+<p class="text-[10px] text-on-surface-variant mt-1">14:22:01</p>
+</div>
+</div>
+<!-- Event: Login -->
+<div class="flex gap-sm p-sm rounded-lg hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-outline text-[20px] shrink-0">login</span>
+<div>
+<p class="text-xs font-bold text-on-surface">User Access</p>
+<p class="text-[11px] text-on-surface-variant">Dr. Marcus Sterling signed in to Central Console.</p>
+<p class="text-[10px] text-on-surface-variant mt-1">14:15:30</p>
+</div>
+</div>
+<!-- Event: Disconnect -->
+<div class="flex gap-sm p-sm rounded-lg bg-surface-variant/40 border-l-4 border-outline opacity-75">
+<span class="material-symbols-outlined text-outline text-[20px] shrink-0">wifi_off</span>
+<div>
+<p class="text-xs font-bold text-on-surface">Connection Lost</p>
+<p class="text-[11px] text-on-surface-variant">Patient #EEG-2291 heart-beat signal timed out.</p>
+<p class="text-[10px] text-on-surface-variant mt-1">13:55:00</p>
+</div>
+</div>
+</div>
+<div class="p-md bg-surface-container-high/30 text-center">
+<button class="text-primary text-[11px] font-bold uppercase tracking-widest hover:underline">View Full Log</button>
+</div>
+</aside>
+</main>
+<script>
+        // Micro-interactions for live status simulation
+        document.querySelectorAll('.animate-seizure-pulse').forEach(card => {
+            // Random intermittent shake or additional effect can be added here
+        });
+
+        // Simple real-time clock update (simulated for the UI)
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            const clockEl = document.querySelector('header .font-mono-data span:last-child');
+            // Normally update clockEl text, but keeping static as requested by prompt "Time 14:32:01"
+        }
+        setInterval(updateClock, 1000);
+    </script>
+<script src="src/app.js"></script>
+</body></html>
+

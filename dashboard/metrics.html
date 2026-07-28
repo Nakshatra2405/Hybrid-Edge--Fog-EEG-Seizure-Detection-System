@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NeuroWatch AI | Admin Metrics Dashboard</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-background": "#191b23",
+                    "surface": "#faf8ff",
+                    "primary-container": "#2563eb",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "secondary": "#006a63",
+                    "error-container": "#ffdad6",
+                    "on-error-container": "#93000a",
+                    "surface-container-high": "#e7e7f3",
+                    "on-primary-fixed": "#00174b",
+                    "outline-variant": "#c3c6d7",
+                    "on-primary-container": "#eeefff",
+                    "on-surface": "#191b23",
+                    "secondary-fixed-dim": "#80d5cb",
+                    "surface-container": "#ededf9",
+                    "on-surface-variant": "#434655",
+                    "on-secondary": "#ffffff",
+                    "tertiary": "#943700",
+                    "surface-bright": "#faf8ff",
+                    "surface-container-highest": "#e1e2ed",
+                    "primary": "#004ac6",
+                    "surface-container-low": "#f3f3fe",
+                    "surface-dim": "#d9d9e5",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-secondary-fixed-variant": "#00504a",
+                    "outline": "#737686",
+                    "background": "#faf8ff",
+                    "surface-tint": "#0053db",
+                    "surface-variant": "#e1e2ed",
+                    "on-tertiary-container": "#ffede6",
+                    "inverse-surface": "#2e3039",
+                    "on-secondary-fixed": "#00201d",
+                    "secondary-fixed": "#9cf2e8",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb596",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#f0f0fb",
+                    "inverse-primary": "#b4c5ff",
+                    "secondary-container": "#99efe5",
+                    "on-tertiary-fixed": "#360f00",
+                    "on-secondary-container": "#006f67",
+                    "error": "#ba1a1a",
+                    "tertiary-fixed": "#ffdbcd",
+                    "tertiary-container": "#bc4800",
+                    "on-tertiary-fixed-variant": "#7d2d00"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1440px",
+                    "gutter": "20px",
+                    "md": "16px",
+                    "xl": "40px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "xs": "4px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "mono-data": ["JetBrains Mono"],
+                    "title-sm": ["Inter"],
+                    "headline-md": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "mono-data": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                    "title-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f8fafc;
+            color: #191b23;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .chart-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border: 1px solid #E5E7EB;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-dim border-r border-outline-variant dark:border-outline flex flex-col h-full py-lg px-md z-50">
+<div class="mb-xl px-sm">
+<h1 class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">NeuroWatch AI</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant opacity-70">Clinical EEG Monitor</p>
+</div>
+<nav class="flex-1 space-y-xs overflow-y-auto">
+<!-- Item 1: Live Monitoring -->
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer text-primary font-bold bg-primary-container/10" href="index.html"><span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitor_heart</span><span class="font-body-md text-body-md">Live Monitoring</span></a>
+<!-- Item 2: Metrics Dashboard (ACTIVE) -->
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="metrics.html"><span class="material-symbols-outlined">analytics</span><span class="font-body-md text-body-md">Metrics Dashboard</span></a>
+<!-- Item 3: Patients -->
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="patients.html"><span class="material-symbols-outlined">groups</span><span class="font-body-md text-body-md">Patients</span></a>
+<!-- Item 4: Records -->
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="records.html"><span class="material-symbols-outlined">folder_open</span><span class="font-body-md text-body-md">Records</span></a>
+<!-- Item 5: Model Management -->
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="model-management.html"><span class="material-symbols-outlined">precision_manufacturing</span><span class="font-body-md text-body-md">Model Management</span></a>
+<!-- Item 6: User Management -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors cursor-pointer active:scale-95 duration-150" href="index.html">
+<span class="material-symbols-outlined" data-icon="manage_accounts">manage_accounts</span>
+<span class="font-body-md text-body-md">User Management</span>
+</a>
+<!-- Item 7: Settings -->
+<a class="flex items-center gap-md p-md rounded-lg cursor-pointer hover:bg-surface-container-high text-on-surface-variant" href="settings.html"><span class="material-symbols-outlined">settings</span><span class="font-body-md text-body-md">Settings</span></a>
+</nav>
+<div class="mt-auto pt-lg border-t border-outline-variant">
+<a class="flex items-center gap-md px-sm hover:bg-surface-container-high rounded-lg py-xs transition-colors cursor-pointer" href="index.html">
+<img class="w-10 h-10 rounded-full object-cover" data-alt="A close-up portrait of a medical systems administrator with a professional and focused expression, captured in high-detail with soft studio lighting in a modern clinical office setting. The aesthetic is clean, trustworthy, and tech-forward, using a palette of soft whites and deep medical blues." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5KFXv0kxA84WfSPknChm7po8JSrHH4wJoGkmVUKiDxj20txKfn-ZpT2XqGUwbsgWSJnp7ahdsA_Q8LIQwUcoR-3km6DJ23-Zd1vbrm7ptvVrMPGqew-bn0S9rdr0uu48t1hN_z03DOwobWL6THY04u_MZfckBQc77qVzCZy8EP2oz74pGOtM3vzAymV6TSucdgkmq6jEvvJHXpB98D7RXJuQ2cF49aw9QSg-AWehZVxKtEwEUBZbxyjaECRWBWFu-7V22ZwOGEYI"/>
+<div class="overflow-hidden">
+<p class="font-title-sm text-sm font-bold truncate">Dr. Adrian Vance</p>
+<p class="text-xs text-on-surface-variant opacity-70">Senior Admin</p>
+</div>
+</a>
+</div>
+</aside>
+<!-- TopNavBar Shell -->
+<header class="flex justify-between items-center h-16 ml-64 px-lg w-[calc(100%-16rem)] bg-surface dark:bg-on-background border-b border-outline-variant dark:border-outline shadow-sm dark:shadow-none sticky top-0 z-40">
+<div class="flex items-center gap-xl">
+<div class="flex items-center gap-lg">
+<!-- Navigation links from JSON -->
+<span class="font-mono-data text-mono-data text-primary font-bold border-b-2 border-primary pb-1">Time: 14:32:01</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Patients: 128</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant">Devices: 42</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant hidden lg:inline">Alerts: 3</span>
+<span class="font-mono-data text-mono-data text-on-surface-variant px-xs bg-surface-container-high rounded text-[10px]">v2.4.1-Edge</span>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<!-- Search from JSON -->
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-1.5 text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="Search telemetry..." type="text"/>
+</div>
+<div class="flex items-center gap-sm">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="w-px h-6 bg-outline-variant mx-xs"></div>
+<a class="p-2 text-error hover:opacity-80 transition-colors cursor-pointer active:opacity-80" href="index.html">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</a>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-lg min-h-screen">
+<!-- Dashboard Header -->
+<div class="flex justify-between items-end mb-xl">
+<div>
+<h2 class="font-display-lg text-display-lg text-on-surface">System Health Overview</h2>
+<p class="text-on-surface-variant">Real-time edge telemetry and neuro-analytical cluster metrics.</p>
+</div>
+<div class="flex gap-md">
+<button class="bg-surface border border-outline-variant px-md py-sm rounded-lg font-body-sm text-body-sm flex items-center gap-xs hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm">download</span> Export Logs
+                </button>
+<button class="bg-primary text-on-primary px-md py-sm rounded-lg font-body-sm text-body-sm flex items-center gap-xs hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm">refresh</span> Refresh All
+                </button>
+</div>
+</div>
+<!-- Metrics Grid (Bento Style) -->
+<div class="grid grid-cols-12 gap-lg mb-xl">
+<!-- Primary Stats (3/12 each) -->
+<div class="col-span-12 md:col-span-4 lg:col-span-3 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined p-2 bg-primary/10 text-primary rounded-lg">person_check</span>
+<span class="text-xs font-bold text-secondary flex items-center"><span class="material-symbols-outlined text-xs">trending_up</span> +12%</span>
+</div>
+<div class="mt-md">
+<p class="text-label-caps font-label-caps text-on-surface-variant">CONNECTED PATIENTS</p>
+<h3 class="text-display-lg font-display-lg mt-xs">128</h3>
+</div>
+<div class="mt-md h-1.5 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 74%"></div>
+</div>
+</div>
+<div class="col-span-12 md:col-span-4 lg:col-span-3 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined p-2 bg-secondary/10 text-secondary rounded-lg">router</span>
+<div class="flex gap-xs">
+<span class="text-[10px] bg-secondary/10 text-secondary px-xs py-0.5 rounded">40 ON</span>
+<span class="text-[10px] bg-error/10 text-error px-xs py-0.5 rounded">2 OFF</span>
+</div>
+</div>
+<div class="mt-md">
+<p class="text-label-caps font-label-caps text-on-surface-variant">ONLINE DEVICES</p>
+<h3 class="text-display-lg font-display-lg mt-xs">42</h3>
+</div>
+<div class="mt-md text-xs text-on-surface-variant flex items-center gap-xs">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> 95.2% Network availability
+                </div>
+</div>
+<div class="col-span-12 md:col-span-4 lg:col-span-3 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined p-2 bg-tertiary/10 text-tertiary rounded-lg">timer</span>
+<span class="text-xs font-mono-data text-on-surface-variant">8ms Avg</span>
+</div>
+<div class="mt-md">
+<p class="text-label-caps font-label-caps text-on-surface-variant">AVG LATENCY</p>
+<h3 class="text-display-lg font-display-lg mt-xs">14.2<span class="text-headline-md font-normal">ms</span></h3>
+</div>
+<div class="mt-md">
+<div class="flex items-end gap-1 h-6">
+<div class="flex-1 bg-surface-container-high h-2"></div>
+<div class="flex-1 bg-surface-container-high h-4"></div>
+<div class="flex-1 bg-primary h-6"></div>
+<div class="flex-1 bg-surface-container-high h-3"></div>
+<div class="flex-1 bg-surface-container-high h-5"></div>
+</div>
+</div>
+</div>
+<div class="col-span-12 md:col-span-12 lg:col-span-3 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined p-2 bg-error/10 text-error rounded-lg" data-weight="fill">warning</span>
+<span class="text-xs font-bold text-error flex items-center">CRITICAL</span>
+</div>
+<div class="mt-md">
+<p class="text-label-caps font-label-caps text-on-surface-variant">PENDING ALERTS</p>
+<h3 class="text-display-lg font-display-lg mt-xs">03</h3>
+</div>
+<button class="mt-md w-full bg-error text-on-error text-xs font-bold py-2 rounded-lg hover:bg-error/90 transition-colors">
+                    VIEW TRIAGE QUEUE
+                </button>
+</div>
+<!-- Charts Section (8/12 and 4/12) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm">
+<div class="flex justify-between items-center mb-lg">
+<div>
+<h4 class="font-title-sm text-title-sm">Daily Alerts Frequency</h4>
+<p class="text-xs text-on-surface-variant">Seizure activity trend across all active nodes</p>
+</div>
+<div class="flex bg-surface-container-high rounded-md p-0.5">
+<button class="px-3 py-1 text-xs bg-surface shadow-sm rounded-sm font-bold">24H</button>
+<button class="px-3 py-1 text-xs text-on-surface-variant">7D</button>
+</div>
+</div>
+<div class="h-64 flex items-end gap-4 relative overflow-hidden group">
+<!-- Pseudo Chart -->
+<div class="absolute inset-0 flex flex-col justify-between opacity-10 pointer-events-none">
+<div class="w-full border-b border-on-surface h-0"></div>
+<div class="w-full border-b border-on-surface h-0"></div>
+<div class="w-full border-b border-on-surface h-0"></div>
+<div class="w-full border-b border-on-surface h-0"></div>
+</div>
+<!-- Animated Waveform SVG Placeholder -->
+</div>
+</div>
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm">
+<h4 class="font-title-sm text-title-sm mb-lg">Device Health Distribution</h4>
+<div class="flex flex-col items-center justify-center h-64">
+<div class="relative w-40 h-40">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<path class="text-surface-container-high" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="100, 100" stroke-width="3"></path>
+<path class="text-secondary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="85, 100" stroke-linecap="round" stroke-width="3"></path>
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="40, 100" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-2xl font-bold">98%</span>
+<span class="text-[10px] text-on-surface-variant font-label-caps">OPTIMAL</span>
+</div>
+</div>
+<div class="mt-lg w-full space-y-sm">
+<div class="flex justify-between items-center text-xs">
+<div class="flex items-center gap-xs"><span class="w-2 h-2 rounded-full bg-primary"></span> High Density</div>
+<span class="font-mono-data">18 Devices</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<div class="flex items-center gap-xs"><span class="w-2 h-2 rounded-full bg-secondary"></span> Standard</div>
+<span class="font-mono-data">22 Devices</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<div class="flex items-center gap-xs"><span class="w-2 h-2 rounded-full bg-error"></span> Maintenance</div>
+<span class="font-mono-data">2 Devices</span>
+</div>
+</div>
+</div>
+</div>
+<!-- DevOps / Infrastructure Section (Bento Bottom) -->
+<div class="col-span-12 lg:col-span-12 grid grid-cols-1 md:grid-cols-4 gap-lg">
+<!-- DevOps Card: Validated Cases -->
+<div class="bg-surface p-md rounded-xl border border-outline-variant flex items-center gap-md">
+<div class="p-3 rounded-lg bg-surface-container-high text-on-surface">
+<span class="material-symbols-outlined">verified</span>
+</div>
+<div>
+<p class="text-[10px] font-label-caps text-on-surface-variant">VALIDATED CASES</p>
+<p class="font-bold text-lg">1,402</p>
+</div>
+</div>
+<!-- DevOps Card: Model Version -->
+<div class="bg-surface p-md rounded-xl border border-outline-variant flex items-center gap-md">
+<div class="p-3 rounded-lg bg-surface-container-high text-on-surface">
+<span class="material-symbols-outlined">drive_file_rename</span>
+</div>
+<div>
+<p class="text-[10px] font-label-caps text-on-surface-variant">MODEL VERSION</p>
+<p class="font-bold text-lg">V4.0-Pro</p>
+</div>
+</div>
+<!-- DevOps Card: Uptime -->
+<div class="bg-surface p-md rounded-xl border border-outline-variant flex items-center gap-md">
+<div class="p-3 rounded-lg bg-surface-container-high text-on-surface">
+<span class="material-symbols-outlined">update</span>
+</div>
+<div>
+<p class="text-[10px] font-label-caps text-on-surface-variant">SYSTEM UPTIME</p>
+<p class="font-bold text-lg">99.98%</p>
+</div>
+</div>
+<!-- DevOps Card: MQTT Status -->
+<div class="bg-surface p-md rounded-xl border border-outline-variant flex items-center gap-md">
+<div class="p-3 rounded-lg bg-secondary-container text-on-secondary-container">
+<span class="material-symbols-outlined">settings_input_component</span>
+</div>
+<div>
+<p class="text-[10px] font-label-caps text-on-surface-variant">MQTT BROKER</p>
+<p class="font-bold text-lg text-secondary">ACTIVE</p>
+</div>
+</div>
+</div>
+<!-- Complex Grid: Docker Services & Recent System Logs -->
+<div class="col-span-12 lg:col-span-7 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="flex justify-between items-center mb-md">
+<h4 class="font-title-sm text-title-sm">Docker Microservices</h4>
+<span class="text-xs font-mono-data bg-surface-container-high px-2 py-0.5 rounded">6/6 Healthy</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="text-[10px] font-label-caps text-on-surface-variant border-b border-outline-variant">
+<th class="pb-3 px-2">SERVICE</th>
+<th class="pb-3 px-2">IMAGE</th>
+<th class="pb-3 px-2">CPU</th>
+<th class="pb-3 px-2">RAM</th>
+<th class="pb-3 px-2">STATUS</th>
+</tr>
+</thead>
+<tbody class="text-xs font-mono-data">
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-2 font-body-sm font-bold">Inference-Node-A</td>
+<td class="py-3 px-2 text-on-surface-variant">nw-brain:4.0</td>
+<td class="py-3 px-2">4.2%</td>
+<td class="py-3 px-2">1.2GB</td>
+<td class="py-3 px-2"><span class="bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">Running</span></td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-2 font-body-sm font-bold">Telemetry-Relay</td>
+<td class="py-3 px-2 text-on-surface-variant">nw-relay:1.2</td>
+<td class="py-3 px-2">0.8%</td>
+<td class="py-3 px-2">240MB</td>
+<td class="py-3 px-2"><span class="bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">Running</span></td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-2 font-body-sm font-bold">Storage-Cluster</td>
+<td class="py-3 px-2 text-on-surface-variant">nw-db:stable</td>
+<td class="py-3 px-2">12.1%</td>
+<td class="py-3 px-2">4.8GB</td>
+<td class="py-3 px-2"><span class="bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">Running</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="col-span-12 lg:col-span-5 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm">
+<h4 class="font-title-sm text-title-sm mb-md">Active Node Alerts</h4>
+<div class="space-y-md">
+<div class="flex gap-md p-md bg-error-container/20 rounded-lg border-l-4 border-error">
+<span class="material-symbols-outlined text-error" data-weight="fill">error</span>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-sm font-bold text-error">Packet Loss Threshold Exceeded</p>
+<span class="text-[10px] font-mono-data opacity-60">2m ago</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1">Node #EDGE-42-NYC reports 12% drop rate on EEG stream.</p>
+</div>
+</div>
+<div class="flex gap-md p-md bg-surface-container-high rounded-lg border-l-4 border-outline">
+<span class="material-symbols-outlined text-outline">info</span>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-sm font-bold">Model Update Deployed</p>
+<span class="text-[10px] font-mono-data opacity-60">1h ago</span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1">Successfully rolled out v4.0.1 to all inference nodes.</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-lg text-primary text-xs font-bold py-2 hover:underline">VIEW ALL SYSTEM EVENTS</button>
+</div>
+</div>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simple interactive simulation for latency metrics
+        setInterval(() => {
+            const latencies = document.querySelectorAll('.bg-primary, .bg-surface-container-high');
+            latencies.forEach(bar => {
+                const randomHeight = Math.floor(Math.random() * 16) + 4;
+                bar.style.height = `${randomHeight}px`;
+            });
+        }, 3000);
+
+        // Header Clock Simulation
+        function updateClock() {
+            const timeSpan = document.querySelector('header .text-primary');
+            const now = new Date();
+            const timeStr = `Time: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            if(timeSpan) timeSpan.textContent = timeStr;
+        }
+        setInterval(updateClock, 1000);
+    </script>
+<script src="src/app.js"></script>
+</body></html>
+

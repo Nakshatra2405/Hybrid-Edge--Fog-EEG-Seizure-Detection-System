@@ -1,0 +1,263 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Login | Hybrid Edge AI Monitoring System</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#191b23",
+                      "surface": "#faf8ff",
+                      "primary-container": "#2563eb",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "secondary": "#006a63",
+                      "error-container": "#ffdad6",
+                      "on-error-container": "#93000a",
+                      "surface-container-high": "#e7e7f3",
+                      "on-primary-fixed": "#00174b",
+                      "outline-variant": "#c3c6d7",
+                      "on-primary-container": "#eeefff",
+                      "on-surface": "#191b23",
+                      "secondary-fixed-dim": "#80d5cb",
+                      "surface-container": "#ededf9",
+                      "on-surface-variant": "#434655",
+                      "on-secondary": "#ffffff",
+                      "tertiary": "#943700",
+                      "surface-bright": "#faf8ff",
+                      "surface-container-highest": "#e1e2ed",
+                      "primary": "#004ac6",
+                      "surface-container-low": "#f3f3fe",
+                      "surface-dim": "#d9d9e5",
+                      "on-primary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "on-secondary-fixed-variant": "#00504a",
+                      "outline": "#737686",
+                      "background": "#faf8ff",
+                      "surface-tint": "#0053db",
+                      "surface-variant": "#e1e2ed",
+                      "on-tertiary-container": "#ffede6",
+                      "inverse-surface": "#2e3039",
+                      "on-secondary-fixed": "#00201d",
+                      "secondary-fixed": "#9cf2e8",
+                      "primary-fixed": "#dbe1ff",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-fixed-dim": "#ffb596",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "on-tertiary": "#ffffff",
+                      "inverse-on-surface": "#f0f0fb",
+                      "inverse-primary": "#b4c5ff",
+                      "secondary-container": "#99efe5",
+                      "on-tertiary-fixed": "#360f00",
+                      "on-secondary-container": "#006f67",
+                      "error": "#ba1a1a",
+                      "tertiary-fixed": "#ffdbcd",
+                      "tertiary-container": "#bc4800",
+                      "on-tertiary-fixed-variant": "#7d2d00"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "12px",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "gutter": "20px",
+                      "md": "16px",
+                      "xl": "40px",
+                      "lg": "24px",
+                      "sm": "8px",
+                      "xs": "4px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "body-sm": ["Inter"],
+                      "display-lg-mobile": ["Inter"],
+                      "mono-data": ["JetBrains Mono"],
+                      "title-sm": ["Inter"],
+                      "headline-md": ["Inter"]
+              },
+              "fontSize": {
+                      "display-lg": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "display-lg-mobile": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "mono-data": ["13px", {"lineHeight": "18px", "fontWeight": "500"}],
+                      "title-sm": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8FAFC;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .login-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex items-center justify-center p-md lg:p-0">
+<main class="w-full max-w-[1200px] bg-surface-container-lowest rounded-lg shadow-xl overflow-hidden flex flex-col md:flex-row min-h-[700px]">
+<!-- Left Side: Login Form -->
+<section class="w-full md:w-1/2 p-xl lg:p-[80px] flex flex-col justify-center relative overflow-hidden">
+<!-- Subtle atmospheric glow -->
+<div class="absolute -top-24 -left-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="relative z-10">
+<!-- Branding -->
+<div class="mb-xl flex flex-col items-start">
+<div class="mb-md">
+<img alt="Hospital Edge AI Logo" class="h-16 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZiaUqAyhpSBcc23-38Ss-vWwRyCTKgLXu3VBhh9B_HN_MKz9WfCtrKP-znbaIHW48-Bq5BsrRMkDN5TYkKKvmIj_sp3OsvQYUFvbQzPPVAJUCmwyOntc17Kj5nmL8WPZQNQjq9QY1lPkIjSSOR0bqEGWj1IfBwFwxxaGaBvkgw7oFo0842IuuSspKDO3vX5CMeh_0M3qNEQrcH6Kv_UCpbezLnqBgOSsmcnMVHU1J_4ndm_Vn0PiOV-cbDl0Z6S3tksmt_uMDWdc">
+</div>
+<h1 class="font-headline-md text-headline-md text-on-surface tracking-tight leading-tight">
+                        Hybrid Edge AI <br>
+<span class="text-primary">Monitoring System</span>
+</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-sm">Clinical Grade Neurological Surveillance</p>
+</div>
+<!-- Form -->
+<form class="space-y-lg" onsubmit="return false;">
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs" for="username">Username</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">person</span>
+<input class="w-full pl-xl pr-md py-md bg-surface-container border border-outline-variant rounded-lg font-body-md text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none login-transition" id="username" name="username" placeholder="Enter your ID or email" type="text">
+</div>
+</div>
+<div>
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-xs" for="password">Password</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">lock</span>
+<input class="w-full pl-xl pr-md py-md bg-surface-container border border-outline-variant rounded-lg font-body-md text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none login-transition" id="password" name="password" placeholder="••••••••" type="password">
+</div>
+</div>
+<div class="flex items-center justify-between">
+<label class="flex items-center space-x-sm cursor-pointer group">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary/20 cursor-pointer" type="checkbox">
+<span class="font-body-sm text-body-sm text-on-surface-variant group-hover:text-on-surface transition-colors">Remember Me</span>
+</label>
+<a class="font-body-sm text-body-sm text-primary hover:text-surface-tint font-semibold transition-colors" href="index.html">Forgot Password?</a>
+</div>
+<a href="index.html" class="w-full py-md bg-primary text-on-primary font-title-sm text-title-sm rounded-lg hover:bg-surface-tint active:scale-[0.98] transition-all shadow-md hover:shadow-lg flex items-center justify-center space-x-sm">
+<span class="">Login to Dashboard</span>
+<span class="material-symbols-outlined">arrow_forward</span>
+</a>
+</form>
+<!-- Footer Info -->
+<div class="mt-xl pt-lg border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center space-x-sm">
+<div class="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+<span class="font-mono-data text-mono-data text-on-surface-variant uppercase tracking-wider">Node: Edge-Alpha-04</span>
+</div>
+<span class="font-mono-data text-mono-data text-outline">v2.4.1-Stable</span>
+</div>
+</div>
+</section>
+<!-- Right Side: Healthcare Illustration -->
+<section class="hidden md:flex md:w-1/2 bg-surface-container-low relative items-center justify-center overflow-hidden">
+<!-- Background Image -->
+<div class="absolute inset-0 z-0">
+<img alt="Minimalist healthcare illustration" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkLdyHZ3YOoc4OCEgjQoyqMk3BwbFD30uhlCNRRK5DQ07YsweruutHoY4L6SsdTRaDu9LOP8rl5FhOpPx2jC7f8_wPBxZRtlqbUGOlMtGHsg4ru-M99t8f_FgS-9M3ppGRjT6yRbSaUb776GGb1FzSFQ7dhHAqsP-hQeMHtliJSUDO4xx_IXJoSwJEqV4yg47Ll2wQEElZi8Bo41_CGSFhxqcqmiddqgZKXp8_a93ljDq2w5q18-8jfoDLORgAZNo5q5K4DDGGqdY">
+<!-- Overlay Gradient for Depth -->
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-secondary/5"></div>
+</div>
+<!-- Floating Info Card (Glassmorphism) -->
+<div class="relative z-10 glass-panel p-lg rounded-lg max-w-[320px] shadow-2xl transform hover:-translate-y-2 transition-transform duration-500">
+<div class="flex items-center space-x-md mb-md">
+<div class="p-sm bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</div>
+<div>
+<h3 class="font-title-sm text-title-sm text-on-surface">Real-time EEG</h3>
+<p class="font-mono-data text-[11px] text-on-surface-variant uppercase tracking-widest">Active Monitoring</p>
+</div>
+</div>
+<!-- Simulated Waveform -->
+<div class="h-16 w-full flex items-end space-x-[2px] mb-md overflow-hidden">
+<div class="w-full h-full relative">
+<svg class="w-full h-full stroke-primary stroke-2 fill-none overflow-visible" viewBox="0 0 100 40">
+<path class="path-animate" d="M0 20 Q 5 5, 10 20 T 20 20 T 30 20 T 40 20 T 50 10 T 60 30 T 70 20 T 80 20 T 90 15 T 100 20">
+<animate attributeName="d" dur="4s" repeatCount="indefinite" values="M0 20 Q 5 5, 10 20 T 20 20 T 30 20 T 40 20 T 50 10 T 60 30 T 70 20 T 80 20 T 90 15 T 100 20;
+                                            M0 20 Q 5 35, 10 20 T 20 20 T 30 15 T 40 25 T 50 20 T 60 10 T 70 30 T 80 20 T 90 25 T 100 20;
+                                            M0 20 Q 5 5, 10 20 T 20 20 T 30 20 T 40 20 T 50 10 T 60 30 T 70 20 T 80 20 T 90 15 T 100 20"></animate>
+</path>
+</svg>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-sm">
+<div class="bg-white/50 p-sm rounded border border-white/30">
+<p class="font-label-caps text-[10px] text-outline">SENSITIVITY</p>
+<p class="font-mono-data text-on-surface">98.4%</p>
+</div>
+<div class="bg-white/50 p-sm rounded border border-white/30">
+<p class="font-label-caps text-[10px] text-outline">LATENCY</p>
+<p class="font-mono-data text-on-surface">12ms</p>
+</div>
+</div>
+</div>
+<!-- Additional Decorative Elements -->
+<div class="absolute bottom-xl right-xl flex flex-col items-end opacity-40">
+<span class="font-label-caps text-on-surface-variant text-[10px] tracking-widest mb-xs">SECURED BY</span>
+<div class="flex space-x-sm">
+<span class="material-symbols-outlined text-on-surface-variant">verified_user</span>
+<span class="material-symbols-outlined text-on-surface-variant">encrypted</span>
+</div>
+</div>
+</section>
+</main>
+<script>
+        // Micro-interaction for input focus effects
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.querySelector('.material-symbols-outlined').style.color = '#004ac6';
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.querySelector('.material-symbols-outlined').style.color = '#737686';
+            });
+        });
+
+        // Simple button active state visual feedback
+        const submitBtn = document.querySelector('button[type="submit"]');
+        submitBtn.addEventListener('click', function() {
+            this.innerHTML = `
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="ml-2">Authenticating...</span>
+            `;
+            setTimeout(() => {
+                this.innerHTML = `<span>Login to Dashboard</span><span class="material-symbols-outlined ml-2">arrow_forward</span>`;
+            }, 2000);
+        });
+    </script>
+
+
+
+
+<script src="src/app.js"></script>
+</body></html>
+
