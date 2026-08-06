@@ -1,0 +1,193 @@
+import { Patient } from '../types/patient';
+import { TelemetryEvent } from '../types/telemetry';
+
+export const initialMockPatients: Patient[] = [
+  {
+    id: "#EEG-8829",
+    name: "John Doe",
+    age: 54,
+    dob: "1971-08-14",
+    gender: "Male",
+    bloodGroup: "O+",
+    status: "Critical",
+    room: "ICU 402-A",
+    bed: "Bed #01",
+    doctor: "Dr. Marcus Sterling",
+    staff: "Nurse E. Vance (RN)",
+    timeAdded: "Today 14:15",
+    rawTimestamp: Date.now() - 1000 * 60 * 15,
+    battery: "42%",
+    node: "Edge-Node 04",
+    avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150",
+    vitals: {
+      heartRate: 118,
+      spo2: 94,
+      bp: "142/95",
+      eegAmplitude: 88,
+      seizureProbability: 0.94
+    }
+  },
+  {
+    id: "#EEG-1102",
+    name: "Elena Rodriguez",
+    age: 38,
+    dob: "1988-03-22",
+    gender: "Female",
+    bloodGroup: "A+",
+    status: "Stable",
+    room: "Room 415-B",
+    bed: "Bed #02",
+    doctor: "Dr. Sarah Chen",
+    staff: "Nurse J. Miller",
+    timeAdded: "Yesterday 09:30",
+    rawTimestamp: Date.now() - 1000 * 60 * 60 * 24,
+    battery: "98%",
+    node: "Edge-Node 12",
+    avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150",
+    vitals: {
+      heartRate: 72,
+      spo2: 99,
+      bp: "118/76",
+      eegAmplitude: 18,
+      seizureProbability: 0.03
+    }
+  },
+  {
+    id: "#EEG-4456",
+    name: "Samuel Thompson",
+    age: 67,
+    dob: "1958-11-05",
+    gender: "Male",
+    bloodGroup: "B+",
+    status: "Monitoring",
+    room: "Room 408-A",
+    bed: "Bed #01",
+    doctor: "Dr. Marcus Sterling",
+    staff: "Nurse T. Davis",
+    timeAdded: "Today 11:20",
+    rawTimestamp: Date.now() - 1000 * 60 * 180,
+    battery: "76%",
+    node: "Fog-Sync 08",
+    avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
+    vitals: {
+      heartRate: 84,
+      spo2: 97,
+      bp: "128/82",
+      eegAmplitude: 34,
+      seizureProbability: 0.42
+    }
+  },
+  {
+    id: "#EEG-5012",
+    name: "Maya Patterson",
+    age: 29,
+    dob: "1997-01-17",
+    gender: "Female",
+    bloodGroup: "O-",
+    status: "Stable",
+    room: "Room 410-A",
+    bed: "Bed #01",
+    doctor: "Dr. Marcus Sterling",
+    staff: "Nurse J. Miller",
+    timeAdded: "Today 13:45",
+    rawTimestamp: Date.now() - 1000 * 60 * 45,
+    battery: "100%",
+    node: "Edge-Node 15",
+    avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150",
+    vitals: {
+      heartRate: 68,
+      spo2: 98,
+      bp: "112/72",
+      eegAmplitude: 14,
+      seizureProbability: 0.01
+    }
+  },
+  {
+    id: "#EEG-9901",
+    name: "Arthur Pendelton",
+    age: 71,
+    dob: "1955-04-02",
+    gender: "Male",
+    bloodGroup: "A-",
+    status: "Monitoring",
+    room: "Room 402-B",
+    bed: "Bed #02",
+    doctor: "Resident Dr. A. Patel",
+    staff: "Nurse E. Vance",
+    timeAdded: "Today 08:10",
+    rawTimestamp: Date.now() - 1000 * 60 * 360,
+    battery: "55%",
+    node: "Edge-Node 22",
+    vitals: {
+      heartRate: 78,
+      spo2: 96,
+      bp: "135/88",
+      eegAmplitude: 45,
+      seizureProbability: 0.38
+    }
+  },
+  {
+    id: "#EEG-2291",
+    name: "Linda Wu",
+    age: 42,
+    dob: "1983-09-30",
+    gender: "Female",
+    bloodGroup: "AB-",
+    status: "Discharged",
+    room: "Room 421-C",
+    bed: "Bed #03",
+    doctor: "Dr. Sarah Chen",
+    staff: "Nurse K. Adams",
+    timeAdded: "26 Jul, 16:40",
+    rawTimestamp: Date.now() - 1000 * 60 * 60 * 72,
+    battery: "0%",
+    node: "Disconnected",
+    vitals: {
+      heartRate: 70,
+      spo2: 99,
+      bp: "120/80",
+      eegAmplitude: 0,
+      seizureProbability: 0.0
+    }
+  }
+];
+
+export const initialTelemetryEvents: TelemetryEvent[] = [
+  {
+    id: 'evt-01',
+    patientId: '#EEG-8829',
+    patientName: 'John Doe',
+    title: 'Critical Seizure Spike Detected',
+    description: 'High-amplitude 3Hz spike-wave discharge detected in Temporal Lobe (Channel 03 & 04).',
+    timestamp: '14:31:58',
+    severity: 'critical',
+    type: 'seizure_alert'
+  },
+  {
+    id: 'evt-02',
+    title: 'Model Deployment Completed',
+    description: 'AISeizureNet-v4.8 int8 TFLite model successfully synchronized across 42 Edge Nodes.',
+    timestamp: '14:28:44',
+    severity: 'info',
+    type: 'system_update'
+  },
+  {
+    id: 'evt-03',
+    patientId: '#EEG-5012',
+    patientName: 'Maya Patterson',
+    title: 'Patient Admission & Initialization',
+    description: 'Sensors linked on Edge-Node 15. Continuous 16-channel EEG buffering initiated.',
+    timestamp: '14:25:12',
+    severity: 'success',
+    type: 'admission'
+  },
+  {
+    id: 'evt-04',
+    patientId: '#EEG-8829',
+    title: 'Edge Sensor Battery Warning',
+    description: 'Edge-Node 04 battery reserve below 45%. Connect magnetic charger.',
+    timestamp: '14:22:01',
+    severity: 'warning',
+    type: 'low_battery'
+  }
+];
