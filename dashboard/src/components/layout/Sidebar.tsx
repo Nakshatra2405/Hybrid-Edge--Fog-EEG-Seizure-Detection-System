@@ -8,22 +8,50 @@ import {
   FileText, 
   Settings, 
   UserCheck, 
-  Sliders, 
-  ShieldAlert 
+  ShieldAlert,
+  BrainCircuit,
+  UploadCloud,
+  CheckSquare
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
+  const role = user?.role || 'ADMIN';
 
-  const navItems = [
+  // Role-specific navigation presets
+  let navItems = [
     { name: 'Live Monitoring', path: '/', icon: Activity },
     { name: 'Metrics Dashboard', path: '/metrics', icon: BarChart2 },
     { name: 'Patient Management', path: '/patients', icon: Users },
     { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
-    { name: 'Clinical Records', path: '/records', icon: FileText },
     { name: 'Staff Management (RBAC)', path: '/staff-rbac', icon: ShieldAlert },
     { name: 'Settings & Config', path: '/settings', icon: Settings },
   ];
+
+  if (role === 'DOCTOR') {
+    navItems = [
+      { name: 'Live Monitoring', path: '/', icon: Activity },
+      { name: 'Patient Management', path: '/patients', icon: Users },
+      { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
+      { name: 'Clinical Records', path: '/records', icon: FileText },
+      { name: 'Settings & Config', path: '/settings', icon: Settings },
+    ];
+  } else if (role === 'NURSE') {
+    navItems = [
+      { name: 'Live Monitoring', path: '/', icon: Activity },
+      { name: 'Patient Management', path: '/patients', icon: Users },
+      { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
+      { name: 'Settings & Config', path: '/settings', icon: Settings },
+    ];
+  } else if (role === 'TECHNICIAN') {
+    navItems = [
+      { name: 'Data Review & Samples', path: '/', icon: CheckSquare },
+      { name: 'Model Training & Eval', path: '/technician-training', icon: BrainCircuit },
+      { name: 'Model Upload & Edge OTA', path: '/technician-deployments', icon: UploadCloud },
+      { name: 'Metrics Dashboard', path: '/metrics', icon: BarChart2 },
+      { name: 'Settings & Config', path: '/settings', icon: Settings },
+    ];
+  }
 
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen fixed top-0 left-0 z-50 border-r border-slate-800 shadow-xl">
@@ -64,11 +92,9 @@ export const Sidebar: React.FC = () => {
       {/* Footer: User Profile Badge & Role */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/40">
         <div className="flex items-center gap-3">
-          <img
-            src={user?.avatarUrl || 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150'}
-            alt={user?.name}
-            className="w-9 h-9 rounded-full border border-teal-500/30 object-cover shrink-0"
-          />
+          <div className="w-9 h-9 rounded-full bg-teal-900/60 border border-teal-500/40 font-mono font-bold text-xs text-teal-300 flex items-center justify-center shrink-0">
+            {user?.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() || 'DR'}
+          </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-white truncate">{user?.name}</p>
             <div className="flex items-center gap-1 mt-0.5">

@@ -18,6 +18,7 @@ export interface Patient {
   status: PatientStatus;
   room: string;
   bed: string;
+  floor?: string; // e.g. 'Floor 4 - ICU'
   doctor: string;
   staff: string;
   timeAdded: string;

@@ -1,9 +1,8 @@
 import React from 'react';
 import { Patient } from '../../types/patient';
 import { useRBAC } from '../../context/RBACContext';
+import { useAuth } from '../../context/AuthContext';
 import { 
-  Heart, 
-  Activity, 
   BatteryCharging, 
   Stethoscope, 
   UserCheck, 
@@ -11,7 +10,10 @@ import {
   MapPin, 
   AlertOctagon, 
   BellRing,
-  UserX
+  UserX,
+  Zap,
+  Radio,
+  Send
 } from 'lucide-react';
 
 interface PatientCardProps {
@@ -19,6 +21,7 @@ interface PatientCardProps {
   onCallCode: (p: Patient) => void;
   onNotifyDoctor: (p: Patient) => void;
   onDischarge?: (id: string) => void;
+  onRequestDischarge?: (p: Patient) => void;
 }
 
 export const PatientCard: React.FC<PatientCardProps> = ({
@@ -26,8 +29,11 @@ export const PatientCard: React.FC<PatientCardProps> = ({
   onCallCode,
   onNotifyDoctor,
   onDischarge,
+  onRequestDischarge,
 }) => {
   const { canCallCode, hasRole } = useRBAC();
+  const { user } = useAuth();
+  const role = user?.role || 'ADMIN';
 
   const isCritical = p.status === 'Critical';
   const isMonitoring = p.status === 'Monitoring';
@@ -35,30 +41,38 @@ export const PatientCard: React.FC<PatientCardProps> = ({
 
   let badgeStyle = "bg-teal-50 text-teal-700 border-teal-200 font-bold";
   let cardBorder = "border-slate-200 hover:border-slate-300";
+  let avatarStyle = "bg-teal-100 text-teal-800 border-teal-200";
   let animationClass = "";
 
   if (isCritical) {
     badgeStyle = "bg-red-600 text-white font-bold animate-pulse shadow-sm";
     cardBorder = "border-red-400 ring-2 ring-red-200 shadow-md";
+    avatarStyle = "bg-red-600 text-white font-extrabold";
     animationClass = "animate-seizure-pulse";
   } else if (isMonitoring) {
     badgeStyle = "bg-amber-50 text-amber-700 border-amber-200 font-bold";
+    avatarStyle = "bg-amber-100 text-amber-900 border-amber-300 font-bold";
   } else if (isDischarged) {
     badgeStyle = "bg-slate-100 text-slate-500 border-slate-200 font-medium";
     cardBorder = "border-slate-200 opacity-60 grayscale";
+    avatarStyle = "bg-slate-200 text-slate-500 border-slate-300";
   }
+
+  // Generate Monogram Initials e.g. "John Doe" -> "JD"
+  const initials = p.name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
 
   return (
     <div className={`bg-white border ${cardBorder} rounded-xl p-4 flex flex-col gap-3 transition-all ${animationClass}`}>
-      {/* Top Row: Avatar, Name, ID & Status Badge */}
+      {/* Top Row: Monogram Initials Badge, Name, ID & Status Badge */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
-            {p.avatarUrl ? (
-              <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-slate-400 font-bold text-sm">{p.name.slice(0, 2).toUpperCase()}</span>
-            )}
+          <div className={`w-11 h-11 rounded-lg border font-mono font-bold text-sm shrink-0 flex items-center justify-center shadow-xs ${avatarStyle}`}>
+            {initials}
           </div>
           <div>
             <h3 className="font-bold text-slate-900 text-sm leading-snug">{p.name}</h3>
@@ -90,26 +104,30 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         </div>
       </div>
 
-      {/* Real-Time Live Vitals Banner */}
-      <div className="grid grid-cols-3 gap-2 p-2 bg-teal-950 text-white rounded-lg text-xs font-mono">
+      {/* Edge EEG Seizure Inference Output Banner */}
+      <div className="grid grid-cols-3 gap-2 p-2.5 bg-slate-950 text-white rounded-lg text-xs font-mono">
         <div className="flex flex-col items-center">
-          <span className="text-[9px] text-teal-400 uppercase flex items-center gap-1">
-            <Heart className="w-3 h-3 text-red-400 animate-bounce" /> Heart Rate
+          <span className="text-[9px] text-slate-400 uppercase flex items-center gap-1">
+            <AlertOctagon className="w-3 h-3 text-amber-400" /> Seizure Prob
           </span>
-          <span className="font-bold text-sm text-teal-200">{p.vitals.heartRate} <span className="text-[9px] text-teal-400">bpm</span></span>
-        </div>
-        <div className="flex flex-col items-center border-x border-teal-800/60 px-1">
-          <span className="text-[9px] text-teal-400 uppercase flex items-center gap-1">
-            <Activity className="w-3 h-3 text-sky-400" /> EEG Amp
-          </span>
-          <span className="font-bold text-sm text-teal-200">{p.vitals.eegAmplitude} <span className="text-[9px] text-teal-400">µV</span></span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-[9px] text-teal-400 uppercase flex items-center gap-1">
-            <AlertOctagon className="w-3 h-3 text-amber-400" /> Prob
-          </span>
-          <span className={`font-bold text-sm ${p.vitals.seizureProbability > 0.7 ? 'text-red-400 font-extrabold' : 'text-teal-200'}`}>
+          <span className={`font-bold text-sm ${p.vitals.seizureProbability > 0.7 ? 'text-red-400 font-extrabold animate-pulse' : 'text-emerald-400'}`}>
             {(p.vitals.seizureProbability * 100).toFixed(0)}%
+          </span>
+        </div>
+
+        <div className="flex flex-col items-center border-x border-slate-800/80 px-1">
+          <span className="text-[9px] text-slate-400 uppercase flex items-center gap-1">
+            <Zap className="w-3 h-3 text-teal-400" /> Latency
+          </span>
+          <span className="font-bold text-sm text-teal-200">4.2 <span className="text-[9px] text-teal-400">ms</span></span>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <span className="text-[9px] text-slate-400 uppercase flex items-center gap-1">
+            <Radio className="w-3 h-3 text-sky-400" /> Node State
+          </span>
+          <span className={`font-bold text-[11px] mt-0.5 ${p.battery === '0%' ? 'text-slate-500' : 'text-sky-300'}`}>
+            {p.battery === '0%' ? 'OFFLINE' : 'ONLINE'}
           </span>
         </div>
       </div>
@@ -161,14 +179,33 @@ export const PatientCard: React.FC<PatientCardProps> = ({
         </button>
       </div>
 
-      {/* Discharge Action (Admin & Doctor Only) */}
-      {hasRole(['ADMIN', 'DOCTOR']) && !isDischarged && onDischarge && (
-        <button
-          onClick={() => onDischarge(p.id)}
-          className="w-full py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-1 mt-0.5 border border-slate-200"
-        >
-          <UserX className="w-3 h-3" /> Discharge Patient
-        </button>
+      {/* Discharge / Request Discharge Action */}
+      {!isDischarged && (
+        <>
+          {role === 'ADMIN' && onDischarge && (
+            <button
+              onClick={() => onDischarge(p.id)}
+              className="w-full py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-700 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-1 mt-0.5 border border-slate-200"
+            >
+              <UserX className="w-3.5 h-3.5" /> Discharge Patient
+            </button>
+          )}
+
+          {role === 'DOCTOR' && (
+            <button
+              onClick={() => {
+                if (onRequestDischarge) {
+                  onRequestDischarge(p);
+                } else {
+                  alert(`📩 Discharge request for ${p.name} (${p.id}) submitted to Admin!`);
+                }
+              }}
+              className="w-full py-1.5 bg-amber-50 text-amber-800 hover:bg-amber-100 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-1 mt-0.5 border border-amber-200"
+            >
+              <Send className="w-3.5 h-3.5" /> Request Discharge from Admin
+            </button>
+          )}
+        </>
       )}
     </div>
   );

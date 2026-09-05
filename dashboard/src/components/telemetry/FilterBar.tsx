@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Filter, Plus, ChevronDown, Users, Clock, AlertTriangle, Activity, UserX } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Filter, Plus, ChevronDown, Users, Clock, AlertTriangle, Activity, UserX, Send } from 'lucide-react';
 
 interface FilterBarProps {
   currentFilterName: string;
   onFilterSelect: (type: string, name: string) => void;
   onAddPatientClick: () => void;
+  onRequestAdmissionClick?: () => void;
 }
 
 const filterOptions = [
@@ -19,7 +21,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   currentFilterName,
   onFilterSelect,
   onAddPatientClick,
+  onRequestAdmissionClick,
 }) => {
+  const { user } = useAuth();
+  const role = user?.role || 'ADMIN';
+
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -74,13 +80,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           )}
         </div>
 
-        {/* Add Patient Trigger */}
-        <button
-          onClick={onAddPatientClick}
-          className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-bold hover:bg-teal-700 shadow-md transition-all"
-        >
-          <Plus className="w-4 h-4" /> Add Patient
-        </button>
+        {/* Role Action Button */}
+        {role === 'ADMIN' && (
+          <button
+            onClick={onAddPatientClick}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-bold hover:bg-teal-700 shadow-md transition-all"
+          >
+            <Plus className="w-4 h-4" /> Add Patient
+          </button>
+        )}
+
+        {role === 'DOCTOR' && onRequestAdmissionClick && (
+          <button
+            onClick={onRequestAdmissionClick}
+            className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg text-xs font-bold hover:bg-teal-700 shadow-md transition-all"
+          >
+            <Send className="w-4 h-4" /> Request Patient Admission
+          </button>
+        )}
       </div>
     </div>
   );
