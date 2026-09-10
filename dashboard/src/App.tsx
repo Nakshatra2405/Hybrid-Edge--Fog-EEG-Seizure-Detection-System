@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { RBACProvider } from './context/RBACContext';
 import { MainLayout } from './components/layout/MainLayout';
@@ -22,6 +22,8 @@ import { TechnicianDataReviewPage } from './pages/technician/TechnicianDataRevie
 import { ModelTrainingPage } from './pages/technician/ModelTrainingPage';
 import { ModelDeploymentPage } from './pages/technician/ModelDeploymentPage';
 
+import { api } from './services/apiClient';
+
 const initialModelVersions: TrainedModelVersion[] = [
   {
     id: 'mod-v4.8',
@@ -36,34 +38,66 @@ const initialModelVersions: TrainedModelVersion[] = [
     confusionMatrix: { truePositive: 412, falsePositive: 8, trueNegative: 1240, falseNegative: 6 },
     isDeployed: true,
   },
-  {
-    id: 'mod-v4.7',
-    versionName: 'AISeizureNet-v4.7-fp16.tflite',
-    trainedDate: '2026-08-15',
-    trainedBy: 'Alex Rivera (BME Technician)',
-    sampleCount: 10,
-    accuracy: 97.2,
-    precision: 96.8,
-    recall: 97.0,
-    f1Score: 96.9,
-    confusionMatrix: { truePositive: 395, falsePositive: 12, trueNegative: 1210, falseNegative: 11 },
-    isDeployed: false,
-  },
 ];
 
 export const AppContent: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const role = user?.role || 'ADMIN';
 
-  const [patients, setPatients] = useState<Patient[]>(initialMockPatients);
+  React.useEffect(() => {
+    if (!user && location.pathname !== '/login') {
+      navigate('/login', { replace: true });
+    }
+  }, [user, location.pathname, navigate]);
+
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [events, setEvents] = useState<TelemetryEvent[]>(initialTelemetryEvents);
-  const [sessionRecords, setSessionRecords] = useState<EEGSessionRecord[]>(initialSessionRecords);
+  const [sessionRecords, setSessionRecords] = useState<EEGSessionRecord[]>([]);
   const [modelVersions, setModelVersions] = useState<TrainedModelVersion[]>(initialModelVersions);
   const [adminRequests, setAdminRequests] = useState<AdminRequestNotification[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const handleCallCode = (p: Patient) => {
+  // Load live data from C# backend
+  const loadData = React.useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // 1. Fetch Patients (Role-scoped by backend)
+      if (role !== 'TECHNICIAN') {
+        const livePatients = await api.getPatients();
+        setPatients(livePatients);
+      }
+
+      // 2. Fetch Clinical Sessions (Role-scoped by backend)
+      const liveSessions = await api.getClinicalSessions();
+      setSessionRecords(liveSessions);
+
+      // 3. Fetch Models
+      if (role === 'TECHNICIAN' || role === 'ADMIN') {
+        const liveModels = await api.getModels();
+        if (liveModels && liveModels.length > 0) {
+          setModelVersions(liveModels);
+        }
+      }
+
+      // 4. Fetch Notifications
+      const liveNotifs = await api.getNotifications();
+      setAdminRequests(liveNotifs);
+    } catch (err) {
+      console.error('Failed to load live data from backend:', err);
+    }
+  }, [user, role]);
+
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleCallCode = async (p: Patient) => {
+    await api.callCode(p.room, p.name, `Emergency Code Blue triggered for ${p.name} in Room ${p.room}`);
     alert(`🚨 CODE BLUE DISPATCHED!\n\nPatient: ${p.name} (${p.id})\nLocation: ${p.room}\n\nICU Crash Cart Team & On-Call Physician notified!`);
+    loadData();
   };
 
   const handleNotifyDoctor = (p: Patient) => {
@@ -75,19 +109,10 @@ export const AppContent: React.FC = () => {
     alert(`✅ Patient ${newPatient.name} (${newPatient.id}) registered & telemetry initialized on ${newPatient.node}!`);
   };
 
-  const handleRequestAdmission = (name: string, room: string, nurseName: string, details: string) => {
-    const newReq: AdminRequestNotification = {
-      id: `req-adm-${Date.now()}`,
-      type: 'admission_request',
-      patientName: name,
-      requestedByDoctor: user?.name || 'Dr. Sarah Chen',
-      room: `${room} (Nurse: ${nurseName})`,
-      timestamp: 'Just now',
-      details,
-      status: 'PENDING',
-    };
-    setAdminRequests([newReq, ...adminRequests]);
+  const handleRequestAdmission = async (name: string, room: string, nurseName: string, details: string) => {
+    await api.requestAdmission(name, `${room} (Nurse: ${nurseName})`, details);
     alert(`📩 Patient Admission Request for "${name}" (Assigned Nurse: ${nurseName}) submitted to System Admin!`);
+    loadData();
   };
 
   const handleDischargePatient = (id: string) => {
@@ -97,52 +122,26 @@ export const AppContent: React.FC = () => {
     alert(`✅ Patient ${id} has been discharged from active monitoring.`);
   };
 
-  const handleRequestDischarge = (p: Patient) => {
-    const newReq: AdminRequestNotification = {
-      id: `req-dis-${Date.now()}`,
-      type: 'discharge_request',
-      patientId: p.id,
-      patientName: p.name,
-      requestedByDoctor: user?.name || 'Dr. Sarah Chen',
-      room: p.room,
-      timestamp: 'Just now',
-      details: `Physician requested discharge for ${p.name} (${p.id}).`,
-      status: 'PENDING',
-    };
-    setAdminRequests([newReq, ...adminRequests]);
+  const handleRequestDischarge = async (p: Patient) => {
+    await api.requestDischarge(p.id, `Physician requested discharge for ${p.name} (${p.id}).`);
     alert(`📩 Discharge Request for "${p.name}" (${p.id}) submitted to System Admin!`);
+    loadData();
   };
 
   // Doctor approves session for training
-  const handleToggleApproveSession = (sessionId: string) => {
-    setSessionRecords((prev) =>
-      prev.map((rec) => {
-        if (rec.sessionId === sessionId) {
-          const nextState = !rec.isApprovedForTraining;
-          if (nextState) {
-            alert(`🧠 EEG Session ${sessionId} approved by Doctor!\n\nIt is now reflected in your Settings page queue to send to the Technician.`);
-          }
-          return {
-            ...rec,
-            isApprovedForTraining: nextState,
-            approvedTimestamp: nextState ? 'Just now' : 'Pending',
-          };
-        }
-        return rec;
-      })
-    );
+  const handleToggleApproveSession = async (sessionId: string) => {
+    const success = await api.approveSession(sessionId);
+    if (success) {
+      alert(`🧠 EEG Session ${sessionId} approved by Doctor in database!\n\nIt is now reflected in your queue to send to the Technician.`);
+      loadData();
+    }
   };
 
   // Doctor submits approved sessions to Technician
-  const handleSendAllApprovedForTraining = () => {
-    setSessionRecords((prev) =>
-      prev.map((rec) => {
-        if (rec.isApprovedForTraining) {
-          return { ...rec, addedToTechnicianQueue: false };
-        }
-        return rec;
-      })
-    );
+  const handleSendAllApprovedForTraining = async () => {
+    await api.sendDataForTraining();
+    alert('✅ Approved EEG sessions dispatched to Azure training queue in database!');
+    loadData();
   };
 
   // Technician adds doctor-approved sample to training queue
@@ -164,14 +163,14 @@ export const AppContent: React.FC = () => {
   };
 
   // Technician deploys model to Edge
-  const handleDeployModelToEdge = (id: string) => {
-    setModelVersions(
-      modelVersions.map((m) => ({ ...m, isDeployed: m.id === id }))
-    );
+  const handleDeployModelToEdge = async (id: string) => {
+    await api.deployModel(id);
+    alert('🚀 Model deployed via wireless BLE OTA to edge nodes in database!');
+    loadData();
   };
 
   if (!user) {
-    return <LoginPage onLoginSuccess={() => {}} />;
+    return <LoginPage onLoginSuccess={() => navigate('/')} />;
   }
 
   // Filter queued samples for technician training page

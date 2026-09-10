@@ -11,11 +11,12 @@ import {
   ShieldAlert,
   BrainCircuit,
   UploadCloud,
-  CheckSquare
+  CheckSquare,
+  LogOut
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const role = user?.role || 'ADMIN';
 
   // Role-specific navigation presets
@@ -91,17 +92,26 @@ export const Sidebar: React.FC = () => {
 
       {/* Footer: User Profile Badge & Role */}
       <div className="p-4 border-t border-slate-800 bg-slate-950/40">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-teal-900/60 border border-teal-500/40 font-mono font-bold text-xs text-teal-300 flex items-center justify-center shrink-0">
-            {user?.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() || 'DR'}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-white truncate">{user?.name}</p>
-            <div className="flex items-center gap-1 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" />
-              <p className="text-[10px] text-teal-400 font-mono uppercase tracking-wider">{user?.role}</p>
+        <div className="flex items-center gap-3 justify-between">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="w-9 h-9 rounded-full bg-teal-900/60 border border-teal-500/40 font-mono font-bold text-xs text-teal-300 flex items-center justify-center shrink-0">
+              {user?.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() || 'DR'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-white truncate">{user?.name}</p>
+              <div className="flex items-center gap-1 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-ping" />
+                <p className="text-[10px] text-teal-400 font-mono uppercase tracking-wider">{user?.role}</p>
+              </div>
             </div>
           </div>
+          <button
+            onClick={logout}
+            title="Sign Out"
+            className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800/80 rounded-lg transition-colors shrink-0"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </aside>

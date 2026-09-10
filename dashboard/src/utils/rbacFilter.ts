@@ -4,30 +4,15 @@ import { UserProfile } from '../types/rbac';
 export const getScopedPatients = (user: UserProfile | null, patients: Patient[]): Patient[] => {
   if (!user) return [];
 
-  if (user.role === 'ADMIN') {
-    return patients;
-  }
-
-  if (user.role === 'DOCTOR') {
-    // Strictly scope patients assigned to this doctor
-    const docName = user.name.toLowerCase();
-    const docParts = docName.split(' ').filter((p) => p !== 'dr.' && p !== 'dr');
-    const lastName = docParts.pop() || docName;
-
-    return patients.filter((p) => {
-      const pDoc = p.doctor.toLowerCase();
-      return pDoc.includes(lastName) || docName.includes(pDoc) || pDoc.includes(docName);
-    });
-  }
-
-  if (user.role === 'NURSE') {
-    // Return patients on allotted floor e.g. Room 400 series / ICU Floor 4
-    return patients.filter((p) => p.room.includes('40') || p.room.includes('ICU'));
-  }
-
+  // Backend C# API at /api/v1/patients is the single source of truth for role-based scoping:
+  // - Doctors receive only their assigned patients
+  // - Nurses receive only their floor's patients
+  // - Admins receive all hospital patients
+  // - Technicians receive 0 patients (HIPAA PII protection)
   if (user.role === 'TECHNICIAN') {
-    return []; // Technician has zero patient visibility
+    return [];
   }
 
   return patients;
 };
+

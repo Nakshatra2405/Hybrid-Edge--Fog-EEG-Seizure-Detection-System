@@ -10,7 +10,6 @@ import {
   Bell, 
   HelpCircle, 
   ShieldCheck,
-  ChevronDown,
   AlertOctagon,
   BellRing,
   BatteryLow,
@@ -70,14 +69,12 @@ const initialNotifications: DoctorNotification[] = [
 ];
 
 export const Header: React.FC<HeaderProps> = ({ patientCount, searchQuery, onSearchChange }) => {
-  const { user, setUserRole } = useAuth();
+  const { user } = useAuth();
   const [timeStr, setTimeStr] = useState<string>('');
-  const [showRoleDropdown, setShowRoleDropdown] = useState<boolean>(false);
   const [showNotifDropdown, setShowNotifDropdown] = useState<boolean>(false);
   const [notifications, setNotifications] = useState<DoctorNotification[]>(initialNotifications);
 
   const notifRef = useRef<HTMLDivElement>(null);
-  const roleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -95,9 +92,6 @@ export const Header: React.FC<HeaderProps> = ({ patientCount, searchQuery, onSea
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setShowNotifDropdown(false);
       }
-      if (roleRef.current && !roleRef.current.contains(e.target as Node)) {
-        setShowRoleDropdown(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -114,8 +108,6 @@ export const Header: React.FC<HeaderProps> = ({ patientCount, searchQuery, onSea
       notifications.map((n) => (n.id === id ? { ...n, isRead: !n.isRead } : n))
     );
   };
-
-  const roles: UserRole[] = ['ADMIN', 'DOCTOR', 'NURSE', 'TECHNICIAN'];
 
   return (
     <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-6 flex items-center justify-between shadow-sm">
@@ -139,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({ patientCount, searchQuery, onSea
         </div>
       </div>
 
-      {/* Right: Search, RBAC Role Switcher & User Actions */}
+      {/* Right: Search, RBAC Role Badge & User Actions */}
       <div className="flex items-center gap-4">
         {/* Search Field */}
         <div className="relative">
@@ -153,39 +145,10 @@ export const Header: React.FC<HeaderProps> = ({ patientCount, searchQuery, onSea
           />
         </div>
 
-        {/* RBAC Quick Role Simulator Dropdown */}
-        <div className="relative" ref={roleRef}>
-          <button
-            onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 border border-teal-200 text-teal-800 rounded-lg text-xs font-bold hover:bg-teal-100 transition-colors"
-          >
-            <ShieldCheck className="w-4 h-4 text-teal-600" />
-            <span>Role: {user?.role}</span>
-            <ChevronDown className="w-3.5 h-3.5 ml-0.5 opacity-70" />
-          </button>
-
-          {showRoleDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-2 z-50">
-              <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100 mb-1">
-                Simulate RBAC Access Role
-              </div>
-              {roles.map((role) => (
-                <button
-                  key={role}
-                  onClick={() => {
-                    setUserRole(role);
-                    setShowRoleDropdown(false);
-                  }}
-                  className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between hover:bg-slate-50 ${
-                    user?.role === role ? 'text-teal-700 font-bold bg-teal-50/50' : 'text-slate-700'
-                  }`}
-                >
-                  <span>{role}</span>
-                  {user?.role === role && <span className="w-2 h-2 rounded-full bg-teal-600" />}
-                </button>
-              ))}
-            </div>
-          )}
+        {/* RBAC Active Role Badge (Static) */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 border border-teal-200 text-teal-800 rounded-lg text-xs font-bold shadow-xs">
+          <ShieldCheck className="w-4 h-4 text-teal-600" />
+          <span>Role: {user?.role}</span>
         </div>
 
         {/* User Actions */}

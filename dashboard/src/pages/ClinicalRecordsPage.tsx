@@ -28,6 +28,10 @@ export const ClinicalRecordsPage: React.FC<ClinicalRecordsPageProps> = ({
   const [selectedPatientFilter, setSelectedPatientFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  const uniquePatients = Array.from(
+    new Map(sessionRecords.map((rec) => [rec.patientId, rec.patientName])).entries()
+  );
+
   const filteredRecords = sessionRecords.filter((rec) => {
     const matchesPatient = selectedPatientFilter === 'all' || rec.patientId === selectedPatientFilter;
     const q = searchQuery.toLowerCase().trim();
@@ -57,7 +61,7 @@ export const ClinicalRecordsPage: React.FC<ClinicalRecordsPageProps> = ({
         </div>
         <div className="flex items-center gap-2 text-xs font-mono bg-teal-50 text-teal-800 border border-teal-200 px-3 py-1.5 rounded-lg">
           <UserCheck className="w-4 h-4 text-teal-600" />
-          <span>Attending Physician: <strong className="text-slate-900">{user?.name || 'Dr. Sarah Chen'}</strong></span>
+          <span>Attending Physician: <strong className="text-slate-900">{user?.name || 'Dr. Sarah Roberts, MD'}</strong></span>
         </div>
       </div>
 
@@ -73,11 +77,11 @@ export const ClinicalRecordsPage: React.FC<ClinicalRecordsPageProps> = ({
             className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-900 font-medium focus:ring-2 focus:ring-teal-500 outline-none"
           >
             <option value="all">All Registered Patients ({sessionRecords.length} sessions)</option>
-            <option value="#EEG-8829">John Doe (#EEG-8829)</option>
-            <option value="#EEG-1102">Elena Rodriguez (#EEG-1102)</option>
-            <option value="#EEG-4456">Samuel Thompson (#EEG-4456)</option>
-            <option value="#EEG-5012">Maya Patterson (#EEG-5012)</option>
-            <option value="#EEG-9901">Arthur Pendelton (#EEG-9901)</option>
+            {uniquePatients.map(([id, name]) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
           </select>
         </div>
 

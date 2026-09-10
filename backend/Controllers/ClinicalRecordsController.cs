@@ -21,7 +21,7 @@ public class ClinicalRecordsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "DOCTOR,TECHNICIAN")]
+    [Authorize(Roles = "ADMIN,DOCTOR,TECHNICIAN")]
     public async Task<ActionResult<IEnumerable<ClinicalSessionDto>>> GetSessions()
     {
         var role = User.FindFirstValue(ClaimTypes.Role);
@@ -104,7 +104,7 @@ public class ClinicalRecordsController : ControllerBase
     }
 
     [HttpPost("send-for-training")]
-    [Authorize(Roles = "DOCTOR,TECHNICIAN")]
+    [Authorize(Roles = "ADMIN,DOCTOR,TECHNICIAN")]
     public async Task<ActionResult<SendTrainingResponseDto>> SendDataForTraining()
     {
         var hospitalIdStr = User.FindFirstValue("hospital_id");

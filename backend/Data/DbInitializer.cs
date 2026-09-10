@@ -27,6 +27,21 @@ public static class DbInitializer
 
         if (await db.Users.AnyAsync())
         {
+            // Ensure all seeded users have valid BCrypt hashes for 'password123'
+            var existingUsers = await db.Users.ToListAsync();
+            bool hasChanged = false;
+            foreach (var u in existingUsers)
+            {
+                if (!auth.VerifyPassword("password123", u.PasswordHash))
+                {
+                    u.PasswordHash = auth.HashPassword("password123");
+                    hasChanged = true;
+                }
+            }
+            if (hasChanged)
+            {
+                await db.SaveChangesAsync();
+            }
             return; // Users already seeded
         }
 

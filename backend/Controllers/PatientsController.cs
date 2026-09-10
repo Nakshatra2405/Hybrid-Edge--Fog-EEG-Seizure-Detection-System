@@ -57,10 +57,8 @@ public class PatientsController : ControllerBase
         else if (role == "NURSE")
         {
             var nurse = await _db.Nurses.FirstOrDefaultAsync(n => n.UserId == userId);
-            if (nurse != null && !string.IsNullOrEmpty(nurse.AssignedFloor))
-            {
-                query = query.Where(p => p.AssignedFloor.ToLower() == nurse.AssignedFloor.ToLower());
-            }
+            if (nurse == null) return Ok(new List<PatientResponseDto>());
+            query = query.Where(p => p.AssignedNurseId == nurse.Id);
         }
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<PatientStatus>(status, true, out var patientStatus))

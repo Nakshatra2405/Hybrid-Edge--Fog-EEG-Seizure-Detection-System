@@ -186,6 +186,16 @@ public record UpdateStaffRoleDto(
     string? Department
 );
 
+public record UpdateStaffDto(
+    string? FullName,
+    string? Role,
+    string? Department,
+    string? LicenseNumber,
+    string? AssignedFloor,
+    string? Password
+);
+
+
 public record StaffResponseDto(
     Guid Id,
     Guid UserId,
