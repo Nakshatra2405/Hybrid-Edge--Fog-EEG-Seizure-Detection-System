@@ -1,20 +1,22 @@
 # Hybrid Edge–Fog EEG Seizure Detection System
 
-An offline, hospital-scale Edge AI system prototype for real-time epilepsy monitoring using Raspberry Pi edge devices, Docker microservices, MQTT communication, FastAPI backend, PostgreSQL + TimescaleDB, and an automated continuous retraining loop with OTA updates.
+A production-grade, budget-friendly hospital Edge AI system prototype for real-time epilepsy & seizure monitoring. The architecture pairs an ultra-low-power wearable TinyML edge node (**Arduino Nano 33 BLE Sense**) with a hospital Fog computing layer (**C# ASP.NET Core / FastAPI Web API + PostgreSQL 18 + React Vite Tailwind Dashboard**), Bluetooth Low Energy (BLE) gateway, and an automated continuous retraining loop with Azure Cloud & GitHub Actions MLOps.
 
 ---
 
 ## 📁 Repository Structure
 
-* [`documents/`](documents/): Architecture notes, dataset recommendations, and repository layout.
-  * [`Hybrid_Edge_Fog_EEG_Project_Notes.md`](documents/Hybrid_Edge_Fog_EEG_Project_Notes.md)
-  * [`Proposed_Repository_Structure.md`](documents/Proposed_Repository_Structure.md)
-  * [`Dataset_Recommendations.md`](documents/Dataset_Recommendations.md)
-* [`simulator/`](simulator/): Patient EEG Data Streamer (Laptop 1 simulation over MQTT).
-* [`edge/`](edge/): Raspberry Pi 5 Edge Inference Engine, local alert handler & OTA update agent.
-* [`server/`](server/): Hospital Server / Fog Layer (Laptop 2) running Docker Compose (FastAPI, TimescaleDB, Mosquitto MQTT Broker).
-* [`dashboard/`](dashboard/): Doctor/Nurse Monitoring Web Dashboard (React / Next.js).
-* [`ml/`](ml/): Model training, evaluation, quantization & TFLite/ONNX export pipeline.
+* [`documents/`](documents/): Architecture specifications, dataset guides, API contracts, and database schema:
+  * [`Hybrid_Edge_Fog_EEG_Project_Notes.md`](documents/Hybrid_Edge_Fog_EEG_Project_Notes.md) — Comprehensive system architecture & workflow.
+  * [`Proposed_Repository_Structure.md`](documents/Proposed_Repository_Structure.md) — Full repository layout & module responsibilities.
+  * [`Dataset_Recommendations.md`](documents/Dataset_Recommendations.md) — CHB-MIT & UCI Epilepsy dataset preprocessing guidelines.
+  * [`API_and_WebSocket_Specification.md`](documents/API_and_WebSocket_Specification.md) — REST endpoints & real-time WebSocket protocol.
+  * [`azure_integration.md`](documents/azure_integration.md) — 100% Free-tier Azure IoT Hub & Blob Storage setup.
+* [`ml/`](ml/): AI/ML model development, preprocessing, training, INT8 quantization, and TFLite Micro C-array export pipeline.
+* [`edge/`](edge/): Wearable Edge Device Firmware for Arduino Nano 33 BLE Sense (TFLite Micro inference engine & BLE OTA receiver).
+* [`backend/`](backend/): Hospital Fog Server Web API (C# ASP.NET Core 8 & FastAPI options) + PostgreSQL 18 + RBAC security.
+* [`dashboard/`](dashboard/): Doctor, Nurse, Admin, and Technician Web Dashboard (React 18 + TypeScript + Vite + Tailwind CSS).
+* [`simulator/`](simulator/): Patient EEG Signal Streamer & Seizure Waveform Injector.
 
 ---
 
@@ -22,8 +24,8 @@ An offline, hospital-scale Edge AI system prototype for real-time epilepsy monit
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/<your-username>/EEG.git
-   cd EEG
+   git clone https://github.com/Nakshatra2405/Hybrid-Edge--Fog-EEG-Seizure-Detection-System.git
+   cd Hybrid-Edge--Fog-EEG-Seizure-Detection-System
    ```
 2. **Environment Configuration**:
    Copy `.env.example` to `.env` and fill in local configuration settings:
@@ -31,9 +33,10 @@ An offline, hospital-scale Edge AI system prototype for real-time epilepsy monit
    cp .env.example .env
    ```
 3. **Module Guidelines**:
-   Refer to the `README.md` file inside each respective folder (`simulator/`, `edge/`, `server/`, `dashboard/`, `ml/`) for role-specific instructions.
+   Refer to the `README.md` file inside each respective folder (`ml/`, `edge/`, `backend/`, `dashboard/`, `simulator/`, `documents/`) for role-specific instructions.
 
 ---
 
 ## 📄 License & Team
 Mini Project - Semester Team Collaboration.
+
