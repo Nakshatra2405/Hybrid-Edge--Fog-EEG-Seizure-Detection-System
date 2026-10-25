@@ -1,0 +1,9 @@
+{
+  "dataset": "UCI Epileptic Seizure Recognition",
+  "float_model_size_kb": 16.14,
+  "int8_model_size_kb": 10.59,
+  "c_header_path": "uci_model_data.h",
+  "parity_mae": 0.0066,
+  "samples_tested": 100,
+  "parity_check_passed": true
+}

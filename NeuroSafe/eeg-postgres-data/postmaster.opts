@@ -1,0 +1,1 @@
+C:/Program Files/PostgreSQL/17/bin/postgres.exe "-D" "D:/NeuroSafe/eeg-postgres-data" "-p" "5434" "-h" "localhost"

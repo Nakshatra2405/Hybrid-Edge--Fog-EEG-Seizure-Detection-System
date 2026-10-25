@@ -1,0 +1,18 @@
+{
+  "sample_count": 24,
+  "accuracy": 100.0,
+  "precision": 100.0,
+  "recall": 100.0,
+  "f1_score": 100.0,
+  "true_positive": 4,
+  "false_positive": 0,
+  "true_negative": 20,
+  "false_negative": 0,
+  "specificity": 100.0,
+  "balanced_accuracy": 100.0,
+  "decision_threshold_used": 0.5,
+  "total_interictal_hours": 0.011,
+  "window_false_positive_per_hour": 0.0,
+  "event_false_alarms_per_hour": 0.0,
+  "event_merging_rule": "2 consecutive windows (4s), 60.0s refractory"
+}

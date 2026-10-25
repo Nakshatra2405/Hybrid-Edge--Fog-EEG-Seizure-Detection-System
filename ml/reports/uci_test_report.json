@@ -1,0 +1,27 @@
+{
+  "dataset": "UCI Epileptic Seizure Recognition",
+  "model_name": "UCITinySeizureNet_1D",
+  "sample_count": 1725,
+  "accuracy": 92.7,
+  "precision": 80.33,
+  "recall_sensitivity": 84.06,
+  "specificity": 94.86,
+  "f1_score": 82.15,
+  "balanced_accuracy": 89.46,
+  "true_positive": 290,
+  "false_positive": 71,
+  "true_negative": 1309,
+  "false_negative": 55,
+  "confusion_matrix": [
+    [
+      1309,
+      71
+    ],
+    [
+      55,
+      290
+    ]
+  ],
+  "decision_threshold_used": 0.6,
+  "float_model_size_kb": 77.75
+}

@@ -1,0 +1,6 @@
+{
+  "threshold": 0.6,
+  "val_f1": 84.56,
+  "val_recall": 84.93,
+  "val_precision": 84.2
+}

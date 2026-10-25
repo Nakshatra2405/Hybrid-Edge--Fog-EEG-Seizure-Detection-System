@@ -1,0 +1,58 @@
+{
+  "pipeline_name": "EEG Seizure Detection End-to-End Pipeline",
+  "run_type": "SMOKE_TEST_BENCHMARK",
+  "overall_status": "SUCCESS",
+  "total_runtime_sec": 2.67,
+  "stages": {
+    "pre_flight_checks": {
+      "status": "PASS",
+      "filter_attenuation_64hz_db": -41.24883590226582,
+      "mutually_exclusive_subjects": 8,
+      "duration_sec": 0.001
+    },
+    "preprocessing": {
+      "status": "PASS",
+      "total_windows": 120,
+      "ictal_windows": 20,
+      "interictal_windows": 100,
+      "window_shape": [
+        120,
+        1,
+        256,
+        1
+      ],
+      "duration_sec": 0.197
+    },
+    "classical_baseline": {
+      "status": "PASS",
+      "accuracy": 100.0,
+      "f1_score": 100.0,
+      "duration_sec": 0.139
+    },
+    "neural_training": {
+      "status": "PASS",
+      "epochs_trained": 5,
+      "final_loss": 0.4846,
+      "validation_threshold": 0.5,
+      "duration_sec": 1.475
+    },
+    "test_evaluation": {
+      "status": "PASS",
+      "accuracy": 100.0,
+      "sensitivity": 100.0,
+      "specificity": 100.0,
+      "window_fpw_per_hour": 0.0,
+      "event_fa_per_hour": 0.0,
+      "duration_sec": 0.048
+    },
+    "quantization_export": {
+      "status": "PASS",
+      "float_size_kb": 15.0,
+      "int8_size_kb": 10.2,
+      "parity_mae": 0.0005,
+      "c_header_generated": "model_data.h",
+      "duration_sec": 0.805
+    }
+  },
+  "note": "Smoke test outputs are strictly for pipeline software verification; not to be used as clinical or hardware claims."
+}

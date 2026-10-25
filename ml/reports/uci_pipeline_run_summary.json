@@ -1,0 +1,116 @@
+{
+  "experiment_name": "UCI Epileptic Seizure Recognition Real-Data Experiment",
+  "dataset_source": "UCI Machine Learning Repository (Dataset 388)",
+  "input_format": "178 sample values per example (1-second chunk @ 178 Hz)",
+  "total_dataset_rows": 11500,
+  "split_sizes": {
+    "train": 8050,
+    "val": 1725,
+    "test": 1725
+  },
+  "model_comparison": {
+    "Random_Forest_Baseline": {
+      "accuracy": 87.3,
+      "f1_score": 57.14,
+      "sensitivity": 42.32,
+      "specificity": 98.55,
+      "balanced_accuracy": 70.43,
+      "confusion_matrix": [
+        [
+          1360,
+          20
+        ],
+        [
+          199,
+          146
+        ]
+      ],
+      "model_size_kb": 2962.37
+    },
+    "UCITinySeizureNet_1D_CNN": {
+      "accuracy": 92.7,
+      "f1_score": 82.15,
+      "sensitivity": 84.06,
+      "specificity": 94.86,
+      "balanced_accuracy": 89.46,
+      "confusion_matrix": [
+        [
+          1309,
+          71
+        ],
+        [
+          55,
+          290
+        ]
+      ],
+      "decision_threshold": 0.6,
+      "float_model_size_kb": 16.14,
+      "int8_model_size_kb": 10.59,
+      "c_header_exported": "uci_model_data.h"
+    }
+  },
+  "total_runtime_sec": 33.8,
+  "stages": {
+    "data_verification": {
+      "status": "PASS",
+      "total_rows": 11500,
+      "binary_distribution": {
+        "Positive (Class 1 - Seizure)": 2300,
+        "Negative (Classes 2-5 - Non-Seizure)": 9200,
+        "Positive_Ratio": 0.2,
+        "Negative_Ratio": 0.8
+      },
+      "duration_sec": 0.478
+    },
+    "splitting": {
+      "status": "PASS",
+      "summary": {
+        "train_samples": 8050,
+        "val_samples": 1725,
+        "test_samples": 1725,
+        "train_positive_ratio": 0.2,
+        "val_positive_ratio": 0.2,
+        "test_positive_ratio": 0.2,
+        "cnn_input_shape": [
+          1,
+          178,
+          1
+        ]
+      },
+      "duration_sec": 0.681
+    },
+    "baseline_evaluation": {
+      "status": "PASS",
+      "accuracy": 87.3,
+      "f1_score": 57.14,
+      "sensitivity": 42.32,
+      "specificity": 98.55,
+      "duration_sec": 2.613
+    },
+    "neural_training": {
+      "status": "PASS",
+      "epochs_trained": 12,
+      "final_train_loss": 0.258,
+      "validation_threshold": 0.6,
+      "duration_sec": 24.087
+    },
+    "cnn_test_evaluation": {
+      "status": "PASS",
+      "accuracy": 92.7,
+      "f1_score": 82.15,
+      "sensitivity": 84.06,
+      "specificity": 94.86,
+      "balanced_accuracy": 89.46,
+      "duration_sec": 0.391
+    },
+    "quantization": {
+      "status": "PASS",
+      "float_size_kb": 16.14,
+      "int8_size_kb": 10.59,
+      "parity_mae": 0.0066,
+      "c_header": "uci_model_data.h",
+      "duration_sec": 5.544
+    }
+  },
+  "scientific_disclaimer": "This experiment is a dataset-specific benchmark on pre-segmented 178-sample vectors. Because UCI removes individual subject IDs, this evaluation is sample-stratified rather than patient-separated. Test metrics must NOT be claimed as proof of general clinical seizure detection or patient generalization."
+}

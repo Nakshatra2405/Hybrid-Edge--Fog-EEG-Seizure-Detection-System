@@ -1,0 +1,5 @@
+{
+  "quantization_parity_mae": 0.0005,
+  "samples_tested": 24,
+  "parity_check_passed": true
+}

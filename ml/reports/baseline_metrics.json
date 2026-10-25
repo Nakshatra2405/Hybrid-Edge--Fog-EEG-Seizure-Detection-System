@@ -1,0 +1,12 @@
+{
+  "model_type": "RandomForest_Baseline",
+  "sample_count": 24,
+  "accuracy": 100.0,
+  "precision": 100.0,
+  "recall": 100.0,
+  "f1_score": 100.0,
+  "true_positive": 7,
+  "false_positive": 0,
+  "true_negative": 17,
+  "false_negative": 0
+}

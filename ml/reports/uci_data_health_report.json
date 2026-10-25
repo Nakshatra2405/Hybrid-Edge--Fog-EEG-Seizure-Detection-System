@@ -1,0 +1,24 @@
+{
+  "dataset_name": "UCI Epileptic Seizure Recognition",
+  "official_url": "https://archive.ics.uci.edu/dataset/388/epileptic+seizure+recognition",
+  "provenance": "University of Bonn EEG Database (Andrzejak et al., 2001), formatted by Dr. Ralph Andrzejak / Harun Resit Erdal",
+  "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "total_rows": 11500,
+  "total_columns": 180,
+  "feature_count_per_sample": 178,
+  "nan_count": 0,
+  "original_5_class_distribution": {
+    "Class 1": 2300,
+    "Class 2": 2300,
+    "Class 3": 2300,
+    "Class 4": 2300,
+    "Class 5": 2300
+  },
+  "binary_label_mapping": {
+    "Positive (Class 1 - Seizure)": 2300,
+    "Negative (Classes 2-5 - Non-Seizure)": 9200,
+    "Positive_Ratio": 0.2,
+    "Negative_Ratio": 0.8
+  },
+  "verification_status": "PASS"
+}
