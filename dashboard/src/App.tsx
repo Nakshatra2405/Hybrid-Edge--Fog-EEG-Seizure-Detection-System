@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { RBACProvider } from './context/RBACContext';
 import { MainLayout } from './components/layout/MainLayout';
+import { useTelemetry, TelemetryUpdate } from './hooks/useTelemetry';
 
 import { initialMockPatients, initialTelemetryEvents, initialSessionRecords } from './services/mockApi';
 import { Patient } from './types/patient';
@@ -59,6 +60,33 @@ export const AppContent: React.FC = () => {
   const [adminRequests, setAdminRequests] = useState<AdminRequestNotification[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // ── SignalR live telemetry ──────────────────────────────────────────────────
+  const handleTelemetryUpdate = useCallback((update: TelemetryUpdate) => {
+    if (!update.patientId) return; // unassigned node — ignore
+    setPatients((prev) =>
+      prev.map((p) => {
+        // Match by edgeNode assignment stored in p.node or by patientId if available
+        if (p.id === String(update.patientId) || p.mrn === String(update.patientId)) {
+          const isCritical = update.seizureProbability >= 0.70;
+          return {
+            ...p,
+            status: isCritical ? 'Critical' : p.status === 'Critical' && update.seizureProbability < 0.40 ? 'Monitoring' : p.status,
+            battery: `${update.batteryPercentage}%`,
+            node: update.nodeName || p.node,
+            vitals: {
+              ...p.vitals,
+              seizureProbability: update.seizureProbability,
+              eegAmplitude: Math.round(update.seizureProbability * 100),
+            },
+          };
+        }
+        return p;
+      })
+    );
+  }, []);
+
+  useTelemetry(handleTelemetryUpdate);
+
   // Load live data from C# backend
   const loadData = React.useCallback(async () => {
     if (!user) return;
@@ -104,9 +132,36 @@ export const AppContent: React.FC = () => {
     alert(`🔔 URGENT TELEMETRY NOTIFICATION DISPATCHED!\n\nPatient: ${p.name}\nDoctor: ${p.doctor}\n\nNotification sent to physician mobile app.`);
   };
 
-  const handleAddPatient = (newPatient: Patient) => {
-    setPatients([newPatient, ...patients]);
-    alert(`✅ Patient ${newPatient.name} (${newPatient.id}) registered & telemetry initialized on ${newPatient.node}!`);
+  const handleAddPatient = async (newPatient: Patient) => {
+    // Resolve doctor and nurse IDs if available from staff list
+    const staff = await api.getStaff();
+    const doc = staff.find((s) => s.name === newPatient.doctor);
+    const nurse = staff.find((s) => s.name === newPatient.staff);
+
+    const names = newPatient.name.trim().split(' ');
+    const firstName = names[0] || 'Unknown';
+    const lastName = names.slice(1).join(' ') || 'Patient';
+
+    const res = await api.createPatient({
+      mrn: newPatient.id,
+      firstName,
+      lastName,
+      dob: newPatient.dob || '1980-01-01',
+      gender: newPatient.gender || 'Male',
+      bloodGroup: newPatient.bloodGroup || 'O+',
+      assignedFloor: newPatient.floor || 'Floor 4 - ICU',
+      room: newPatient.room || '404',
+      assignedDoctorId: doc ? doc.id : null,
+      assignedNurseId: nurse ? nurse.id : null,
+      edgeNodeId: (newPatient as any).edgeNodeId || null,
+    });
+
+    if (res.success) {
+      alert(`✅ Patient ${newPatient.name} (${newPatient.id}) successfully admitted to Database & Ward!`);
+      loadData();
+    } else {
+      alert(`❌ Failed to admit patient: ${res.message}`);
+    }
   };
 
   const handleRequestAdmission = async (name: string, room: string, nurseName: string, details: string) => {
@@ -115,17 +170,24 @@ export const AppContent: React.FC = () => {
     loadData();
   };
 
-  const handleDischargePatient = (id: string) => {
-    setPatients(
-      patients.map((p) => (p.id === id ? { ...p, status: 'Discharged' as const } : p))
-    );
-    alert(`✅ Patient ${id} has been discharged from active monitoring.`);
+  const handleDischargePatient = async (id: string) => {
+    const success = await api.dischargePatient(id);
+    if (success) {
+      alert(`✅ Patient discharged successfully from database & ward census.`);
+      loadData();
+    } else {
+      alert(`❌ Failed to discharge patient.`);
+    }
   };
 
   const handleRequestDischarge = async (p: Patient) => {
-    await api.requestDischarge(p.id, `Physician requested discharge for ${p.name} (${p.id}).`);
-    alert(`📩 Discharge Request for "${p.name}" (${p.id}) submitted to System Admin!`);
-    loadData();
+    const res = await api.requestDischarge(p.id, `Physician requested discharge for ${p.name} (${p.mrn || p.id}).`);
+    if (res) {
+      alert(`📩 Discharge Request for "${p.name}" (${p.mrn || p.id}) submitted to System Admin!`);
+      loadData();
+    } else {
+      alert(`❌ Failed to submit discharge request.`);
+    }
   };
 
   // Doctor approves session for training
@@ -181,6 +243,8 @@ export const AppContent: React.FC = () => {
       patientCount={patients.length}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
+      adminRequests={adminRequests}
+      onRefreshRequests={loadData}
     >
       <Routes>
         {/* Technican Role Dedicated Routes */}
@@ -237,7 +301,7 @@ export const AppContent: React.FC = () => {
                   searchQuery={searchQuery}
                   onCallCode={handleCallCode}
                   onNotifyDoctor={handleNotifyDoctor}
-                  onAddPatient={handleAddPatient}
+                  onAddPatient={handleAddPatient as (p: Patient) => void}
                   onRequestAdmission={handleRequestAdmission}
                   onDischargePatient={handleDischargePatient}
                   onRequestDischarge={handleRequestDischarge}
@@ -250,7 +314,7 @@ export const AppContent: React.FC = () => {
               element={
                 <PatientManagementPage
                   patients={patients}
-                  onAddPatient={handleAddPatient}
+                  onAddPatient={handleAddPatient as (p: Patient) => void}
                   onRequestAdmission={handleRequestAdmission}
                   onDischargePatient={handleDischargePatient}
                   onRequestDischarge={handleRequestDischarge}

@@ -25,8 +25,8 @@ static tflite::MicroInterpreter* tfl_interpreter = nullptr;
 static TfLiteTensor* input_tensor = nullptr;
 static TfLiteTensor* output_tensor = nullptr;
 
-// Decision threshold tuned on validation set (from uci_decision_threshold.json)
-constexpr float SEIZURE_DECISION_THRESHOLD = 0.60f;
+// Dynamic decision threshold (can be updated in real time via Azure Device Twin)
+float seizure_decision_threshold = 0.60f;
 constexpr int INPUT_SAMPLES = 178;
 
 // Buffer for serial incoming window
@@ -121,7 +121,8 @@ void setup() {
   Serial.println("[OK] TFLite Micro Model Initialized Successfully!");
   Serial.print("   - Tensor Arena: "); Serial.print(kTensorArenaSize / 1024); Serial.println(" KB");
   Serial.print("   - Input dims: [1, 178, 1], type: "); Serial.println(input_tensor->type);
-  Serial.print("   - Decision threshold: "); Serial.println(SEIZURE_DECISION_THRESHOLD);
+  Serial.print("   - Decision threshold: "); Serial.println(seizure_decision_threshold);
+Serial.print("{\"event\":\"STARTED\",\"threshold\":"); Serial.print(seizure_decision_threshold,3); Serial.println("}");
 
   // 2. Initialize BLE Peripheral
   if (!BLE.begin()) {
@@ -200,7 +201,7 @@ void runInferenceOnVector(const float* raw_samples, const char* ground_truth_lab
   if (seizure_prob > 1.0f) seizure_prob = 1.0f;
 
   uint8_t prob_pct = (uint8_t)round(seizure_prob * 100.0f);
-  bool is_seizure = (seizure_prob >= SEIZURE_DECISION_THRESHOLD);
+  bool is_seizure = (seizure_prob >= seizure_decision_threshold);
 
   // E. Update Hardware BLE Characteristics
   seizureProbChar.writeValue(prob_pct);
@@ -232,10 +233,22 @@ void runInferenceOnVector(const float* raw_samples, const char* ground_truth_lab
 void loop() {
   BLE.poll();
 
-  // 1. Process Streamed Data from Python over Serial (Format: "EEG:v1,v2,...,v178\n")
+  // 1. Process Streamed Data from Python over Serial (Format: "EEG:v1,v2,...,v178\n" or "TH:0.80\n")
   if (Serial.available()) {
     String line = Serial.readStringUntil('\n');
     line.trim();
+
+    // Azure Device Twin Dynamic Threshold Update
+    if (line.startsWith("TH:")) {
+      float new_th = line.substring(3).toFloat();
+      if (new_th > 0.05f && new_th <= 0.99f) {
+        seizure_decision_threshold = new_th;
+        Serial.print("{\"type\":\"CONFIG_UPDATED\",\"threshold\":");
+        Serial.print(seizure_decision_threshold, 2);
+        Serial.println("}");
+      }
+      return;
+    }
 
     if (line.startsWith("EEG:")) {
       String data_str = line.substring(4);

@@ -188,6 +188,18 @@ public class PatientsController : ControllerBase
         _db.Patients.Add(patient);
         await _db.SaveChangesAsync();
 
+        if (dto.EdgeNodeId.HasValue)
+        {
+            var node = await _db.EdgeNodes.FindAsync(dto.EdgeNodeId.Value);
+            if (node != null && node.HospitalId == hospitalId)
+            {
+                node.PatientId = patient.Id;
+                node.Room = patient.Room;
+                node.Status = NodeStatus.ONLINE;
+                await _db.SaveChangesAsync();
+            }
+        }
+
         return CreatedAtAction(nameof(GetPatientById), new { id = patient.Id }, new { id = patient.Id, message = "Patient admitted successfully" });
     }
 
@@ -225,6 +237,13 @@ public class PatientsController : ControllerBase
         patient.IsDeleted = true;
         patient.DeletedAt = DateTime.UtcNow;
         patient.UpdatedAt = DateTime.UtcNow;
+
+        // Detach any assigned Edge Nodes so they become available
+        var assignedNodes = await _db.EdgeNodes.Where(n => n.PatientId == patient.Id).ToListAsync();
+        foreach (var n in assignedNodes)
+        {
+            n.PatientId = null;
+        }
 
         await _db.SaveChangesAsync();
 

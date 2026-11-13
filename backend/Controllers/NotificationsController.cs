@@ -109,7 +109,7 @@ public class NotificationsController : ControllerBase
         }
 
         var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-        var patient = await _db.Patients.FindAsync(dto.PatientId);
+        var patient = await _db.Patients.FirstOrDefaultAsync(p => p.Id == dto.PatientId || p.Mrn == dto.PatientId.ToString());
         if (patient == null) return NotFound(new { message = "Patient not found" });
 
         var notif = new AdminNotification
@@ -210,6 +210,49 @@ public class NotificationsController : ControllerBase
                 patient.DischargedAt = DateTime.UtcNow;
                 patient.IsDeleted = true;
                 patient.DeletedAt = DateTime.UtcNow;
+
+                var assignedNodes = await _db.EdgeNodes.Where(n => n.PatientId == patient.Id).ToListAsync();
+                foreach (var n in assignedNodes)
+                {
+                    n.PatientId = null;
+                }
+            }
+        }
+
+        // If admission request was approved, admit the patient into the census
+        if (notif.Type == RequestType.admission_request && notif.Status == RequestStatus.APPROVED)
+        {
+            var names = (notif.PatientName ?? "New Patient").Trim().Split(' ');
+            var fName = names[0];
+            var lName = names.Length > 1 ? string.Join(" ", names.Skip(1)) : "Patient";
+            var genMrn = $"PAT-{Random.Shared.Next(1000, 9999)}";
+
+            var newPatient = new Patient
+            {
+                HospitalId = notif.HospitalId,
+                Mrn = genMrn,
+                FirstName = fName,
+                LastName = lName,
+                Dob = new DateOnly(1985, 1, 1),
+                Gender = GenderEnum.Male,
+                BloodGroup = "O+",
+                AssignedFloor = "Floor 4 - ICU",
+                Room = !string.IsNullOrEmpty(notif.RequestedRoom) ? notif.RequestedRoom : "404",
+                AssignedDoctorId = notif.RequestedByDoctorId,
+                AssignedNurseId = notif.AssignedNurseId,
+                Status = PatientStatus.Monitoring
+            };
+
+            _db.Patients.Add(newPatient);
+            await _db.SaveChangesAsync();
+            notif.PatientId = newPatient.Id;
+
+            // If an edge node is free in this room or default first available node, assign it
+            var freeNode = await _db.EdgeNodes.FirstOrDefaultAsync(n => n.HospitalId == notif.HospitalId && n.PatientId == null && n.Status != NodeStatus.OFFLINE);
+            if (freeNode != null)
+            {
+                freeNode.PatientId = newPatient.Id;
+                freeNode.Room = newPatient.Room;
             }
         }
 

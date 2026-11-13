@@ -102,7 +102,7 @@ export const PatientManagementPage: React.FC<PatientManagementPageProps> = ({
             ) : (
               filtered.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="p-4 font-mono font-bold text-teal-700">{p.id}</td>
+                  <td className="p-4 font-mono font-bold text-teal-700">{p.mrn || p.id}</td>
                   <td className="p-4 font-bold text-slate-900">{p.name}</td>
                   <td className="p-4 text-slate-600">{p.age} yrs ({p.gender})</td>
                   <td className="p-4 font-bold text-red-600">{p.bloodGroup}</td>

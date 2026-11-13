@@ -1,12 +1,15 @@
 import React, { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { AdminRequestNotification } from '../../types/telemetry';
 
 interface MainLayoutProps {
   children: ReactNode;
   patientCount: number;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  adminRequests: AdminRequestNotification[];
+  onRefreshRequests: () => void;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
@@ -14,6 +17,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   patientCount,
   searchQuery,
   onSearchChange,
+  adminRequests,
+  onRefreshRequests,
 }) => {
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -23,6 +28,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           patientCount={patientCount}
           searchQuery={searchQuery}
           onSearchChange={onSearchChange}
+          adminRequests={adminRequests}
+          onRefreshRequests={onRefreshRequests}
         />
         <div className="flex-1 overflow-y-auto">
           {children}

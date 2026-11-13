@@ -76,7 +76,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
           </div>
           <div>
             <h3 className="font-bold text-slate-900 text-sm leading-snug">{p.name}</h3>
-            <p className="text-slate-400 text-xs font-mono">ID: {p.id}</p>
+            <p className="text-slate-400 text-xs font-mono">MRN: {p.mrn || p.id}</p>
           </div>
         </div>
         <span className={`px-2.5 py-1 text-[10px] rounded-full uppercase tracking-wider border ${badgeStyle}`}>

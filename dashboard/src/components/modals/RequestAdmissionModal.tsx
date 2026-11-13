@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { X, UserPlus, Send, UserCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, UserPlus, Send } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/apiClient';
 
 interface RequestAdmissionModalProps {
   isOpen: boolean;
@@ -16,8 +17,21 @@ export const RequestAdmissionModal: React.FC<RequestAdmissionModalProps> = ({
   const { user } = useAuth();
   const [name, setName] = useState<string>('');
   const [room, setRoom] = useState<string>('ICU Room 402-A');
-  const [nurseName, setNurseName] = useState<string>('Nurse E. Vance (RN)');
+  const [nurseName, setNurseName] = useState<string>('');
+  const [nurseOptions, setNurseOptions] = useState<any[]>([]);
   const [details, setDetails] = useState<string>('Continuous EEG Telemetry required for suspected temporal lobe seizures.');
+
+  useEffect(() => {
+    if (isOpen) {
+      api.getStaff().then((staff) => {
+        const nurses = staff.filter((s: any) => s.role === 'NURSE' && s.status === 'ACTIVE');
+        setNurseOptions(nurses);
+        if (nurses.length > 0 && !nurseName) {
+          setNurseName(nurses[0].name);
+        }
+      });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -41,7 +55,7 @@ export const RequestAdmissionModal: React.FC<RequestAdmissionModalProps> = ({
         </div>
 
         <p className="text-xs text-slate-500">
-          Submit patient admission details & assigned nurse to the System Admin for ward registration.
+          Submit patient admission details to Hospital Administration for ward registration & telemetry node allocation.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
@@ -58,7 +72,7 @@ export const RequestAdmissionModal: React.FC<RequestAdmissionModalProps> = ({
           </div>
 
           <div>
-            <label className="block font-medium text-slate-700 mb-1">Allotted Room / Bed *</label>
+            <label className="block font-medium text-slate-700 mb-1">Requested Room / Bed *</label>
             <input
               required
               type="text"
@@ -69,16 +83,29 @@ export const RequestAdmissionModal: React.FC<RequestAdmissionModalProps> = ({
           </div>
 
           <div>
-            <label className="block font-medium text-slate-700 mb-1">Assigned Ward Nurse (RN) *</label>
+            <label className="block font-medium text-slate-700 mb-1">Assigned Ward Nurse (RN)</label>
             <div className="relative">
-              <input
-                required
-                type="text"
-                value={nurseName}
-                onChange={(e) => setNurseName(e.target.value)}
-                placeholder="e.g. Nurse E. Vance (RN)"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-3 pr-3 py-2 text-slate-900 focus:ring-2 focus:ring-teal-500 outline-none"
-              />
+              {nurseOptions.length > 0 ? (
+                <select
+                  value={nurseName}
+                  onChange={(e) => setNurseName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-teal-500 outline-none"
+                >
+                  {nurseOptions.map((n) => (
+                    <option key={n.userId} value={n.name}>
+                      {n.name} ({n.department || 'Ward'})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={nurseName}
+                  onChange={(e) => setNurseName(e.target.value)}
+                  placeholder="e.g. Elena Rostova, RN"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-teal-500 outline-none"
+                />
+              )}
             </div>
           </div>
 

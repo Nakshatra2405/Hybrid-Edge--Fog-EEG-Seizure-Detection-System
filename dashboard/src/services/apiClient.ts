@@ -33,7 +33,8 @@ export const api = {
       if (!Array.isArray(data)) return [];
 
       return data.map((p: any) => ({
-        id: p.mrn || p.id,
+        id: p.id || p.mrn,
+        mrn: p.mrn,
         name: p.name,
         age: p.age,
         dob: p.dob,
@@ -60,6 +61,37 @@ export const api = {
     } catch (err) {
       console.error('API Error in getPatients:', err);
       return [];
+    }
+  },
+
+  // Create Patient (Admit)
+  async createPatient(patientData: {
+    mrn: string;
+    firstName: string;
+    lastName: string;
+    dob: string;
+    gender: string;
+    bloodGroup?: string;
+    assignedFloor: string;
+    room: string;
+    assignedDoctorId?: string | null;
+    assignedNurseId?: string | null;
+    edgeNodeId?: string | null;
+  }): Promise<{ success: boolean; message?: string }> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/patients`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(patientData),
+      });
+      const data = await parseJsonSafe(res);
+      if (!res.ok) {
+        return { success: false, message: data.message || `Error ${res.status}` };
+      }
+      return { success: true, message: data.message || 'Patient admitted successfully' };
+    } catch (err: any) {
+      console.error('API Error in createPatient:', err);
+      return { success: false, message: err.message || 'Network error' };
     }
   },
 
@@ -212,17 +244,47 @@ export const api = {
   },
 
   // Request Admission
-  async requestAdmission(patientName: string, requestedRoom: string, details: string): Promise<any> {
+  async requestAdmission(patientName: string, requestedRoom: string, details: string, assignedNurseId?: string | null): Promise<any> {
     try {
       const res = await fetch(`${API_BASE_URL}/notifications/admission-request`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ patientName, requestedRoom, details }),
+        body: JSON.stringify({ patientName, requestedRoom, details, assignedNurseId }),
       });
       return await parseJsonSafe(res);
     } catch (err) {
       console.error('API Error in requestAdmission:', err);
       return null;
+    }
+  },
+
+  // Call Code Blue
+  async callCode(room: string, patientName?: string, details?: string): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/notifications/call-code`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ room, patientName, details }),
+      });
+      return await parseJsonSafe(res);
+    } catch (err) {
+      console.error('API Error in callCode:', err);
+      return null;
+    }
+  },
+
+  // Resolve Notification
+  async resolveNotification(id: string, status: 'APPROVED' | 'REJECTED', details?: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/notifications/${id}/resolve`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status, details }),
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('API Error in resolveNotification:', err);
+      return false;
     }
   },
 
@@ -238,6 +300,20 @@ export const api = {
     } catch (err) {
       console.error('API Error in requestDischarge:', err);
       return null;
+    }
+  },
+
+  // Discharge Patient (Admin Direct)
+  async dischargePatient(patientId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/patients/${patientId}/discharge`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('API Error in dischargePatient:', err);
+      return false;
     }
   },
 
@@ -351,6 +427,49 @@ export const api = {
     }
   },
 
+
+  // Edge Nodes API
+  async getNodes(): Promise<any[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/edge/nodes`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch edge nodes');
+      const data = await parseJsonSafe(res);
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.error('API Error in getNodes:', err);
+      return [];
+    }
+  },
+
+  async getAvailableNodes(): Promise<any[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/edge/available`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch available edge nodes');
+      const data = await parseJsonSafe(res);
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.error('API Error in getAvailableNodes:', err);
+      return [];
+    }
+  },
+
+  // System Metrics API
+  async getMetrics(): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/telemetry/metrics`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch metrics');
+      return await parseJsonSafe(res);
+    } catch (err) {
+      console.error('API Error in getMetrics:', err);
+      return null;
+    }
+  },
 
   async deactivateStaff(userId: string): Promise<boolean> {
     try {

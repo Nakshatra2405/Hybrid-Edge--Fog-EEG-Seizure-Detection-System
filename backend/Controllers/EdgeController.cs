@@ -21,7 +21,7 @@ public class EdgeController : ControllerBase
     }
 
     [HttpGet("nodes")]
-    [Authorize(Roles = "ADMIN,TECHNICIAN")]
+    [Authorize(Roles = "ADMIN,TECHNICIAN,DOCTOR,NURSE")]
     public async Task<ActionResult<IEnumerable<EdgeNodeDto>>> GetNodes()
     {
         var hospitalIdStr = User.FindFirstValue("hospital_id");
@@ -43,6 +43,35 @@ public class EdgeController : ControllerBase
             n.Status.ToString(),
             n.FirmwareVersion,
             n.Patient != null ? $"{n.Patient.FirstName} {n.Patient.LastName}" : "Unassigned",
+            n.ActiveModel?.VersionName ?? "SeizureNet-v3.2",
+            n.LastHeartbeat.ToString("g")
+        ));
+
+        return Ok(result);
+    }
+
+    [HttpGet("available")]
+    [Authorize(Roles = "ADMIN,DOCTOR,NURSE,TECHNICIAN")]
+    public async Task<ActionResult<IEnumerable<EdgeNodeDto>>> GetAvailableNodes()
+    {
+        var hospitalIdStr = User.FindFirstValue("hospital_id");
+        if (!Guid.TryParse(hospitalIdStr, out var hospitalId)) return Unauthorized();
+
+        var nodes = await _db.EdgeNodes
+            .Where(n => n.HospitalId == hospitalId && n.PatientId == null && n.Status != NodeStatus.OFFLINE)
+            .Include(n => n.ActiveModel)
+            .OrderBy(n => n.NodeName)
+            .ToListAsync();
+
+        var result = nodes.Select(n => new EdgeNodeDto(
+            n.Id,
+            n.NodeName,
+            n.HardwareMac,
+            n.Room,
+            n.BatteryPercentage,
+            n.Status.ToString(),
+            n.FirmwareVersion,
+            "Unassigned (Free)",
             n.ActiveModel?.VersionName ?? "SeizureNet-v3.2",
             n.LastHeartbeat.ToString("g")
         ));

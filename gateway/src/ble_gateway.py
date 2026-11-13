@@ -5,6 +5,7 @@ import os
 import struct
 import datetime
 from bleak import BleakScanner, BleakClient
+from bleak.exc import BleakError
 
 # Azure IoT Hub integration
 try:
@@ -23,6 +24,11 @@ DEVICE_NAME        = "EEG-Nano-ICU-01"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
+import urllib.request
+
+# Local Hospital Backend Ingestion URL
+LOCAL_BACKEND_INGEST_URL = os.environ.get("LOCAL_BACKEND_INGEST_URL", "http://localhost:5000/api/v1/telemetry/ingest")
+
 latest_telemetry = {
     "deviceId": "eeg-nano-node-01",
     "seizureProbability": 0,
@@ -34,8 +40,33 @@ latest_telemetry = {
 
 azure_client = None
 
+def forward_to_local_backend(telemetry_data: dict):
+    """Dual Fog Path: Dispatches telemetry locally to Hospital Backend (PostgreSQL + SignalR)."""
+    try:
+        payload = {
+            "deviceId": telemetry_data.get("deviceId", "eeg-nano-node-01"),
+            "seizureProbability": float(telemetry_data.get("seizureProbability", 0)) / 100.0,
+            "edgeLatencyMs": int(telemetry_data.get("edgeLatencyMs", 14)),
+            "batteryPercentage": int(telemetry_data.get("batteryPercentage", 95)),
+            "status": telemetry_data.get("status", "NORMAL")
+        }
+        req = urllib.request.Request(
+            LOCAL_BACKEND_INGEST_URL,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            pass
+    except Exception as e:
+        logging.debug(f"[Local Backend] Ingest note: {e}")
+
 async def forward_to_azure(telemetry_data: dict):
     global azure_client
+    # 1. Forward to Local Hospital Backend (Immediate local fog loop)
+    forward_to_local_backend(telemetry_data)
+
+    # 2. Forward to Azure IoT Hub (Cloud continuum loop)
     if not azure_client:
         return
     try:
@@ -49,7 +80,7 @@ async def forward_to_azure(telemetry_data: dict):
         message.custom_properties["deviceId"] = telemetry_data["deviceId"]
 
         await azure_client.send_message(message)
-        logging.info(f" [Azure IoT Hub] Telemetry packet forwarded -> Seizure: {telemetry_data['seizureProbability']}% | Latency: {telemetry_data['edgeLatencyMs']}ms")
+        logging.info(f" [Azure IoT Hub & Hospital Fog] Telemetry packet forwarded -> Seizure: {telemetry_data['seizureProbability']}% | Latency: {telemetry_data['edgeLatencyMs']}ms")
     except Exception as e:
         logging.warning(f"  [Azure IoT Hub] Failed to forward telemetry: {e}")
 
@@ -105,7 +136,7 @@ async def run_gateway():
 
     # 1. Initialize Azure IoT Hub connection if string provided
     conn_str = os.environ.get("IOT_HUB_DEVICE_CONNECTION_STRING", "").strip()
-    
+
     # Check .env file in project root and parent directories
     candidate_env_paths = [
         os.path.join(os.path.dirname(__file__), "..", "..", ".env"),
@@ -127,44 +158,62 @@ async def run_gateway():
     await init_azure_iot_hub(conn_str)
 
     # 2. Continuous BLE scanning and streaming loop
-    while True:
-        try:
-            logging.info(f"Scanning for BLE device '{DEVICE_NAME}'...")
-            device = await BleakScanner.find_device_by_name(DEVICE_NAME, timeout=10.0)
+    try:
+        while True:
+            try:
+                logging.info(f"Scanning for BLE device '{DEVICE_NAME}'...")
+                device = await BleakScanner.find_device_by_name(DEVICE_NAME, timeout=10.0)
 
-            if not device:
-                logging.warning(f"Device '{DEVICE_NAME}' not found. Make sure Arduino is powered and advertising. Retrying in 3s...")
-                await asyncio.sleep(3)
-                continue
+                if not device:
+                    logging.warning(
+                        f"Device '{DEVICE_NAME}' not found. "
+                        "Make sure Arduino is powered and advertising. Retrying in 3s..."
+                    )
+                    await asyncio.sleep(3)
+                    continue
 
-            logging.info(f" Found {device.name} [{device.address}]. Connecting over Bluetooth...")
+                logging.info(f" Found {device.name} [{device.address}]. Connecting over Bluetooth...")
 
-            async with BleakClient(device) as client:
-                logging.info(f" Connected to {device.name}!")
-                logging.info("Subscribing to real-time GATT Telemetry Characteristics...")
+                async with BleakClient(device) as client:
+                    logging.info(f" Connected to {device.name}!")
+                    logging.info("Subscribing to real-time GATT Telemetry Characteristics...")
 
-                await client.start_notify(SEIZURE_PROB_UUID, on_seizure_prob_notification)
-                await client.start_notify(BATTERY_CHAR_UUID, on_battery_notification)
-                await client.start_notify(LATENCY_CHAR_UUID, on_latency_notification)
+                    await client.start_notify(SEIZURE_PROB_UUID, on_seizure_prob_notification)
+                    await client.start_notify(BATTERY_CHAR_UUID, on_battery_notification)
+                    await client.start_notify(LATENCY_CHAR_UUID, on_latency_notification)
 
-                logging.info("Live BLE Telemetry Stream Active! Press Ctrl+C to stop.\n")
+                    logging.info("Live BLE Telemetry Stream Active! Press Ctrl+C to stop.\n")
 
-                # Keep connection alive
-                while client.is_connected:
-                    await asyncio.sleep(1)
+                    # Keep connection alive until disconnected
+                    while client.is_connected:
+                        await asyncio.sleep(1)
 
-        except asyncio.CancelledError:
-            logging.info("Gateway shutting down...")
-            break
-        except Exception as e:
-            logging.error(f"Bluetooth connection error: {e}. Reconnecting in 3s...")
-            await asyncio.sleep(3)
-        finally:
-            if azure_client:
-                try:
-                    await azure_client.shutdown()
-                except Exception:
-                    pass
+            except asyncio.CancelledError:
+                raise  # Propagate to outer try for clean shutdown
+            except Exception as e:
+                err_str = str(e)
+                # Bluetooth radio off — wait longer, don't spam
+                if "POWERED_OFF" in err_str or "not powered on" in err_str.lower():
+                    logging.warning(
+                        "⚠️  Bluetooth adapter is POWERED OFF.\n"
+                        "    ➜ Enable Bluetooth: Settings → Bluetooth & devices → toggle ON\n"
+                        "    Retrying in 15s..."
+                    )
+                    await asyncio.sleep(15)
+                else:
+                    logging.error(f"Bluetooth connection error: {e}. Retrying in 5s...")
+                    await asyncio.sleep(5)
+
+    except (asyncio.CancelledError, KeyboardInterrupt):
+        logging.info("Gateway shutting down cleanly...")
+    finally:
+        # Shut down Azure IoT Hub client ONCE at program exit
+        if azure_client:
+            try:
+                await azure_client.shutdown()
+                logging.info("Azure IoT Hub client disconnected.")
+            except Exception:
+                pass
 
 if __name__ == "__main__":
     try:

@@ -33,7 +33,7 @@ export const PatientManagementFixedPage: React.FC<PatientManagementFixedPageProp
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm">{p.name}</h3>
-                  <p className="text-xs font-mono text-slate-400">ID: {p.id}</p>
+                  <p className="text-xs font-mono text-slate-400">MRN: {p.mrn || p.id}</p>
                 </div>
                 <span className={`px-2.5 py-1 text-[10px] rounded-full font-bold uppercase ${
                   p.status === 'Critical' ? 'bg-red-600 text-white animate-pulse' : 'bg-teal-100 text-teal-800'

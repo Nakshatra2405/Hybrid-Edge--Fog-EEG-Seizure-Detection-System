@@ -32,7 +32,8 @@ public record PatientCreateDto(
     string AssignedFloor,
     string Room,
     Guid? AssignedDoctorId,
-    Guid? AssignedNurseId
+    Guid? AssignedNurseId,
+    Guid? EdgeNodeId
 );
 
 public record PatientUpdateDto(
@@ -136,7 +137,8 @@ public record AdmissionRequestDto(
     string PatientName,
     string? RequestedRoom,
     Guid? AssignedNurseId,
-    string Details
+    string Details,
+    Guid? EdgeNodeId
 );
 
 public record DischargeRequestDto(
@@ -210,6 +212,14 @@ public record StaffResponseDto(
 );
 
 // ================= EDGE & TELEMETRY DTOs =================
+public record IngestTelemetryDto(
+    string DeviceId,
+    decimal SeizureProbability,
+    int EdgeLatencyMs,
+    int BatteryPercentage,
+    string? Status
+);
+
 public record EdgeNodeDto(
     Guid Id,
     string NodeName,

@@ -10,6 +10,7 @@ export interface PatientVitals {
 
 export interface Patient {
   id: string;
+  mrn?: string;
   name: string;
   age: number;
   dob: string;
