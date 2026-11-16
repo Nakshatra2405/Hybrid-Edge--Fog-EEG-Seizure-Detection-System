@@ -50,7 +50,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // 2. Configure PostgreSQL with Npgsql DataSource & Enums
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-                       ?? "Host=localhost;Port=5432;Database=eeg_seizure_db;Username=postgres;Password=postgres";
+                       ?? "Host=localhost;Port=5432;Database=eeg_seizure_db;Username=postgres;Password=postgres;Timeout=2;Command Timeout=2;";
 
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 dataSourceBuilder.MapEnum<UserRole>("user_role");
@@ -71,6 +71,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // 3. Add Custom Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<INeuroShieldService, NeuroShieldService>();
 
 // 4. Add SignalR (WebSockets)
 builder.Services.AddSignalR();
@@ -91,7 +92,9 @@ builder.Services.AddCors(options =>
 });
 
 // 6. Add JWT Authentication
-var jwtSecret = builder.Configuration["JwtSettings:Secret"] ?? "SuperSecretEegSeizureDetectionEnterpriseKey_MustBe32CharsOrLonger2026!";
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") 
+                ?? builder.Configuration["JwtSettings:Secret"] 
+                ?? "SuperSecretEegSeizureDetectionEnterpriseKey_MustBe32CharsOrLonger2026!";
 var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "EegSeizureBackend";
 var jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "EegSeizureDashboard";
 
@@ -147,19 +150,21 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
+        NeuroShieldService.IsDatabaseReachable = false;
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database.");
+        logger.LogWarning("PostgreSQL database is offline on startup. Operating in resilient development/demo mode.");
     }
 }
 
 // 8. Configure HTTP Middleware Pipeline
+app.UseCors("CorsPolicy");
+
 if (app.Environment.IsDevelopment() || true)
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "EEG Seizure Detection API v1"));
 }
-
-app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();

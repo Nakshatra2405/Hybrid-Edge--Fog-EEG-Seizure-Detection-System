@@ -520,6 +520,60 @@ export const api = {
       return false;
     }
   },
+
+  // 6. NeuroShield IDS Security API (ADMIN-ONLY)
+  async getSecurityIncidents(): Promise<any[]> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/security/incidents`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch security incidents');
+      const data = await parseJsonSafe(res);
+      return Array.isArray(data) ? data : [];
+    } catch (err) {
+      console.error('API Error in getSecurityIncidents:', err);
+      return [];
+    }
+  },
+
+  async getSecuritySummary(): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/security/summary`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch security summary');
+      return await parseJsonSafe(res);
+    } catch (err) {
+      console.error('API Error in getSecuritySummary:', err);
+      return null;
+    }
+  },
+
+  async resolveSecurityIncident(id: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/security/incidents/${id}/resolve`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('API Error in resolveSecurityIncident:', err);
+      return false;
+    }
+  },
+
+  async getSecurityConfig(): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/security/config`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch security configuration');
+      return await parseJsonSafe(res);
+    } catch (err) {
+      console.error('API Error in getSecurityConfig:', err);
+      return null;
+    }
+  },
 };
 
 

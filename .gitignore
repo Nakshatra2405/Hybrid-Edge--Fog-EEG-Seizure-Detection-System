@@ -61,6 +61,12 @@ docker-volumes/
 Thumbs.db
 *.swp
 
+# .NET / C#
+bin/
+obj/
+*.user
+*.suo
+
 # Environment Variables
 .env
 !.env.example

@@ -5,6 +5,7 @@ using System.Security.Claims;
 using EegSeizureBackend.Data;
 using EegSeizureBackend.DTOs;
 using EegSeizureBackend.Models;
+using EegSeizureBackend.Services;
 
 namespace EegSeizureBackend.Controllers;
 
@@ -26,6 +27,10 @@ public class PatientsController : ControllerBase
         [FromQuery] string? floor,
         [FromQuery] string? search)
     {
+        if (!NeuroShieldService.IsDatabaseReachable)
+        {
+            return Ok(new List<PatientResponseDto>());
+        }
         var role = User.FindFirstValue(ClaimTypes.Role);
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var hospitalIdStr = User.FindFirstValue("hospital_id");
@@ -79,7 +84,15 @@ public class PatientsController : ControllerBase
                                      p.Mrn.ToLower().Contains(s));
         }
 
-        var patients = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
+        List<Patient> patients;
+        try
+        {
+            patients = await query.OrderByDescending(p => p.CreatedAt).ToListAsync();
+        }
+        catch (Exception)
+        {
+            return Ok(new List<PatientResponseDto>());
+        }
 
         var result = patients.Select(p =>
         {

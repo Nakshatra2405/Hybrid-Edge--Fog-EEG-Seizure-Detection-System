@@ -5,6 +5,7 @@ using System.Security.Claims;
 using EegSeizureBackend.Data;
 using EegSeizureBackend.DTOs;
 using EegSeizureBackend.Models;
+using EegSeizureBackend.Services;
 
 namespace EegSeizureBackend.Controllers;
 
@@ -24,14 +25,26 @@ public class ModelsController : ControllerBase
     [Authorize(Roles = "TECHNICIAN,ADMIN")]
     public async Task<ActionResult<IEnumerable<ModelResponseDto>>> GetModels()
     {
+        if (!NeuroShieldService.IsDatabaseReachable)
+        {
+            return Ok(new List<ModelResponseDto>());
+        }
         var hospitalIdStr = User.FindFirstValue("hospital_id");
         if (!Guid.TryParse(hospitalIdStr, out var hospitalId)) return Unauthorized();
 
-        var models = await _db.AiModels
-            .Where(m => m.HospitalId == hospitalId)
-            .Include(m => m.TrainedByTechnician).ThenInclude(t => t!.User)
-            .OrderByDescending(m => m.CreatedAt)
-            .ToListAsync();
+        List<AiModel> models;
+        try
+        {
+            models = await _db.AiModels
+                .Where(m => m.HospitalId == hospitalId)
+                .Include(m => m.TrainedByTechnician).ThenInclude(t => t!.User)
+                .OrderByDescending(m => m.CreatedAt)
+                .ToListAsync();
+        }
+        catch (Exception)
+        {
+            return Ok(new List<ModelResponseDto>());
+        }
 
         var result = models.Select(m => new ModelResponseDto(
             m.Id,

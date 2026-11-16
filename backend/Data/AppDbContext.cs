@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<ClinicalEegSession> ClinicalEegSessions => Set<ClinicalEegSession>();
     public DbSet<AdminNotification> AdminNotifications => Set<AdminNotification>();
     public DbSet<AuditTelemetryLog> AuditTelemetryLogs => Set<AuditTelemetryLog>();
+    public DbSet<SecurityIncident> SecurityIncidents => Set<SecurityIncident>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -93,5 +94,13 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<EdgeNode>()
             .HasIndex(e => new { e.HospitalId, e.HardwareMac })
             .IsUnique();
+
+        // SecurityIncidents
+        modelBuilder.Entity<SecurityIncident>()
+            .HasIndex(s => s.HospitalId);
+        modelBuilder.Entity<SecurityIncident>()
+            .HasIndex(s => s.CreatedAt);
+        modelBuilder.Entity<SecurityIncident>()
+            .HasIndex(s => s.DeviceId);
     }
 }

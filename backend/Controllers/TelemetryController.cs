@@ -1,12 +1,15 @@
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using EegSeizureBackend.Data;
 using EegSeizureBackend.DTOs;
 using EegSeizureBackend.Hubs;
 using EegSeizureBackend.Models;
+using EegSeizureBackend.Services;
 
 namespace EegSeizureBackend.Controllers;
 
@@ -17,37 +20,99 @@ public class TelemetryController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IHubContext<TelemetryHub> _hubContext;
+    private readonly INeuroShieldService _neuroShield;
+    private readonly ILogger<TelemetryController> _logger;
 
-    public TelemetryController(AppDbContext db, IHubContext<TelemetryHub> hubContext)
+    public TelemetryController(
+        AppDbContext db,
+        IHubContext<TelemetryHub> hubContext,
+        INeuroShieldService neuroShield,
+        ILogger<TelemetryController> logger)
     {
         _db = db;
         _hubContext = hubContext;
+        _neuroShield = neuroShield;
+        _logger = logger;
     }
 
     [HttpPost("ingest")]
-    [AllowAnonymous] // Fog Gateway edge ingestion bridge
-    public async Task<IActionResult> IngestTelemetry([FromBody] IngestTelemetryDto dto)
+    [AllowAnonymous] // Authenticated cryptographically via HMAC-SHA256 headers
+    public async Task<IActionResult> IngestTelemetry()
     {
-        // Find node by name or iot_hub_device_id
-        var node = await _db.EdgeNodes
-            .Include(n => n.Patient)
-            .FirstOrDefaultAsync(n => n.NodeName.ToLower() == dto.DeviceId.ToLower() ||
-                                      n.IotHubDeviceId == dto.DeviceId ||
-                                      dto.DeviceId.ToLower().Contains(n.NodeName.ToLower()) ||
-                                      n.NodeName == "Node-01");
+        // 1. Capture exact raw HTTP request body bytes
+        using var ms = new MemoryStream();
+        await Request.Body.CopyToAsync(ms);
+        var rawBytes = ms.ToArray();
 
-        if (node == null)
+        // 2. Extract canonical authentication and replay headers
+        var deviceId = Request.Headers["X-Device-Id"].FirstOrDefault();
+        var seqHeader = Request.Headers["X-Sequence-Number"].FirstOrDefault();
+        var timestampHeader = Request.Headers["X-Timestamp"].FirstOrDefault();
+        var signatureHeader = Request.Headers["X-Signature"].FirstOrDefault();
+        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+
+        // If header missing, check if deviceId is present in json body to provide better diagnostic
+        if (string.IsNullOrWhiteSpace(deviceId) && rawBytes.Length > 0)
         {
-            return NotFound(new { message = "Edge node not recognized" });
+            try
+            {
+                using var doc = JsonDocument.Parse(rawBytes);
+                if (doc.RootElement.TryGetProperty("deviceId", out var devProp))
+                {
+                    deviceId = devProp.GetString();
+                }
+            }
+            catch { /* Ignore peek failure */ }
         }
 
-        node.BatteryPercentage = dto.BatteryPercentage;
-        node.LastHeartbeat = DateTime.UtcNow;
-        node.Status = dto.SeizureProbability >= 0.70m ? NodeStatus.ALERT : NodeStatus.ONLINE;
+        // 3. Synchronous Rule-Based IDS Validation (Rate Limit -> Device Lookup -> Raw Body HMAC -> Freshness -> Sequence)
+        var validation = await _neuroShield.ValidatePacketAsync(
+            deviceId,
+            seqHeader,
+            timestampHeader,
+            signatureHeader,
+            rawBytes,
+            clientIp);
+
+        if (!validation.IsValid)
+        {
+            return StatusCode(validation.StatusCode, new
+            {
+                message = validation.FailureReason,
+                incidentType = validation.IncidentType,
+                sourceClassification = validation.SourceClassification
+            });
+        }
+
+        var node = validation.Node!;
+
+        // 4. Deserialize validated payload
+        IngestTelemetryDto? dto;
+        try
+        {
+            dto = JsonSerializer.Deserialize<IngestTelemetryDto>(rawBytes, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to deserialize verified telemetry JSON for node {NodeName}", node.NodeName);
+            return BadRequest(new { message = "Malformed telemetry JSON body" });
+        }
+
+        if (dto == null)
+        {
+            return BadRequest(new { message = "Empty telemetry payload" });
+        }
+
+        // 5. Construct clinical vital record if node is assigned to a patient
+        TelemetryLiveVital? vital = null;
+        Patient? patient = null;
 
         if (node.PatientId.HasValue)
         {
-            var vital = new TelemetryLiveVital
+            vital = new TelemetryLiveVital
             {
                 HospitalId = node.HospitalId,
                 PatientId = node.PatientId.Value,
@@ -57,28 +122,45 @@ public class TelemetryController : ControllerBase
                 BatteryPercentage = dto.BatteryPercentage,
                 RecordedAt = DateTime.UtcNow
             };
-            _db.TelemetryLiveVitals.Add(vital);
-
-            // Update patient status if critical seizure activity detected
-            var patient = await _db.Patients.FindAsync(node.PatientId.Value);
-            if (patient != null)
-            {
-                if (dto.SeizureProbability >= 0.70m)
-                {
-                    patient.Status = PatientStatus.Critical;
-                }
-                else if (patient.Status == PatientStatus.Critical && dto.SeizureProbability < 0.40m)
-                {
-                    patient.Status = PatientStatus.Monitoring;
-                }
-                patient.UpdatedAt = DateTime.UtcNow;
-            }
+            patient = await _db.Patients.FindAsync(node.PatientId.Value);
         }
 
-        await _db.SaveChangesAsync();
+        // 6. Concurrency-safe atomic commit (updates sequence number & persists vital in single atomic transaction)
+        var committed = await _neuroShield.CommitSequenceAndTelemetryAsync(
+            node.Id,
+            validation.ParsedSequenceNumber,
+            vital ?? new TelemetryLiveVital { HospitalId = node.HospitalId, PatientId = Guid.Empty, EdgeNodeId = node.Id, RecordedAt = DateTime.UtcNow },
+            patient,
+            dto.SeizureProbability);
 
-        // Broadcast to SignalR Telemetry Hub
-        await _hubContext.Clients.All.SendAsync("ReceiveTelemetry", new
+        if (!committed)
+        {
+            await _neuroShield.RecordSecurityIncidentAsync(
+                node.HospitalId,
+                "REPLAY_ATTACK",
+                "CRITICAL",
+                node.NodeName,
+                clientIp,
+                validation.ParsedSequenceNumber,
+                node.LastSequenceNumber + 1,
+                "Concurrent duplicate sequence number detected during atomic database commit.",
+                node.SourceClassification);
+
+            return StatusCode(401, new
+            {
+                message = "Replay conflict: sequence number was already committed by a concurrent transaction.",
+                incidentType = "REPLAY_ATTACK",
+                sourceClassification = node.SourceClassification
+            });
+        }
+
+        // Update in-memory node state for broadcast
+        node.BatteryPercentage = dto.BatteryPercentage;
+        node.Status = dto.SeizureProbability >= 0.70m ? NodeStatus.ALERT : NodeStatus.ONLINE;
+        node.LastSequenceNumber = validation.ParsedSequenceNumber;
+
+        // 7. Broadcast telemetry to authenticated SignalR consumers
+        var broadcastPayload = new
         {
             deviceId = dto.DeviceId,
             nodeName = node.NodeName,
@@ -87,10 +169,20 @@ public class TelemetryController : ControllerBase
             edgeLatencyMs = dto.EdgeLatencyMs,
             batteryPercentage = dto.BatteryPercentage,
             status = node.Status.ToString(),
-            timestamp = DateTime.UtcNow.ToString("o")
-        });
+            sequenceNumber = validation.ParsedSequenceNumber,
+            timestamp = DateTime.UtcNow.ToString("o"),
+            sourceClassification = node.SourceClassification
+        };
 
-        return Ok(new { message = "Telemetry processed successfully" });
+        await _hubContext.Clients.Group($"hospital_{node.HospitalId}").SendAsync("ReceiveTelemetry", broadcastPayload);
+        await _hubContext.Clients.All.SendAsync("ReceiveTelemetry", broadcastPayload); // Backwards compatibility for useTelemetry
+
+        return Ok(new
+        {
+            message = "Telemetry authenticated and processed successfully",
+            sequenceNumber = validation.ParsedSequenceNumber,
+            sourceClassification = node.SourceClassification
+        });
     }
 
     [HttpGet("metrics")]

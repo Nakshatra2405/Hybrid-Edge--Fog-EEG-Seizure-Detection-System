@@ -17,6 +17,7 @@ import { SettingsPage } from './pages/SettingsPage';
 import { PatientManagementFixedPage } from './pages/PatientManagementFixedPage';
 import { StaffManagementRBACPage } from './pages/StaffManagementRBACPage';
 import { LoginPage } from './pages/LoginPage';
+import { SecurityCenterPage } from './pages/SecurityCenterPage';
 
 // Dedicated Technician Pages
 import { TechnicianDataReviewPage } from './pages/technician/TechnicianDataReviewPage';
@@ -45,13 +46,13 @@ export const AppContent: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const role = user?.role || 'ADMIN';
+  const role = user?.role;
 
   React.useEffect(() => {
-    if (!user && location.pathname !== '/login') {
+    if ((!user || !role) && location.pathname !== '/login') {
       navigate('/login', { replace: true });
     }
-  }, [user, location.pathname, navigate]);
+  }, [user, role, location.pathname, navigate]);
 
   const [patients, setPatients] = useState<Patient[]>([]);
   const [events, setEvents] = useState<TelemetryEvent[]>(initialTelemetryEvents);
@@ -85,7 +86,7 @@ export const AppContent: React.FC = () => {
     );
   }, []);
 
-  useTelemetry(handleTelemetryUpdate);
+  useTelemetry(handleTelemetryUpdate, !!user);
 
   // Load live data from C# backend
   const loadData = React.useCallback(async () => {
@@ -337,6 +338,7 @@ export const AppContent: React.FC = () => {
               />
             )}
             {role === 'ADMIN' && <Route path="/staff-rbac" element={<StaffManagementRBACPage />} />}
+            {role === 'ADMIN' && <Route path="/security-ids" element={<SecurityCenterPage />} />}
             <Route
               path="/settings"
               element={

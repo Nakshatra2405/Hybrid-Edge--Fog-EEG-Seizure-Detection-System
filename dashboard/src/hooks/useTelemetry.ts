@@ -26,7 +26,7 @@ type TelemetryCallback = (update: TelemetryUpdate) => void;
  * The hook manages reconnection automatically; it tears down the connection
  * when the component unmounts.
  */
-export function useTelemetry(onUpdate: TelemetryCallback) {
+export function useTelemetry(onUpdate: TelemetryCallback, enabled: boolean = true) {
   const connectionRef = useRef<signalR.HubConnection | null>(null);
   const callbackRef = useRef<TelemetryCallback>(onUpdate);
 
@@ -39,9 +39,13 @@ export function useTelemetry(onUpdate: TelemetryCallback) {
     if (connectionRef.current) return;
 
     const token = localStorage.getItem('auth_token');
+    if (!token) {
+      // Do not attempt to negotiate without an active auth token
+      return;
+    }
 
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl(HUB_URL, token ? { accessTokenFactory: () => token } : {})
+      .withUrl(HUB_URL, { accessTokenFactory: () => token })
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .configureLogging(signalR.LogLevel.Warning)
       .build();
@@ -74,7 +78,9 @@ export function useTelemetry(onUpdate: TelemetryCallback) {
   }, []);
 
   useEffect(() => {
-    startConnection();
+    if (enabled) {
+      startConnection();
+    }
 
     return () => {
       if (connectionRef.current) {
@@ -82,5 +88,5 @@ export function useTelemetry(onUpdate: TelemetryCallback) {
         connectionRef.current = null;
       }
     };
-  }, [startConnection]);
+  }, [startConnection, enabled]);
 }

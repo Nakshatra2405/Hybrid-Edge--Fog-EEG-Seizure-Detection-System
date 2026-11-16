@@ -437,6 +437,13 @@ public class EdgeNode
     [Column("last_deployment_at")]
     public DateTime? LastDeploymentAt { get; set; }
 
+    [Column("last_sequence_number")]
+    public long LastSequenceNumber { get; set; } = 0;
+
+    [MaxLength(20)]
+    [Column("source_classification")]
+    public string SourceClassification { get; set; } = "PHYSICAL";
+
     [Column("last_heartbeat")]
     public DateTime LastHeartbeat { get; set; } = DateTime.UtcNow;
 

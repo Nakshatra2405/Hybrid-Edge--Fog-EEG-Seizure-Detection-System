@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   onRefreshRequests,
 }) => {
   const { user } = useAuth();
-  const role = user?.role || 'ADMIN';
+  const role = user?.role;
   const [timeStr, setTimeStr] = useState<string>('');
   const [showNotifDropdown, setShowNotifDropdown] = useState<boolean>(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);

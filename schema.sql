@@ -271,8 +271,10 @@ CREATE TABLE edge_nodes (
     active_model_id    UUID,
     iot_hub_device_id  VARCHAR(255),
     current_image_tag  VARCHAR(255),
-    last_deployment_at TIMESTAMPTZ,
-    last_heartbeat     TIMESTAMPTZ  DEFAULT CURRENT_TIMESTAMP,
+    last_deployment_at   TIMESTAMPTZ,
+    last_sequence_number BIGINT       DEFAULT 0 NOT NULL,
+    source_classification VARCHAR(20) DEFAULT 'PHYSICAL' NOT NULL,
+    last_heartbeat       TIMESTAMPTZ  DEFAULT CURRENT_TIMESTAMP,
     updated_at         TIMESTAMPTZ  DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT unique_hospital_mac UNIQUE (hospital_id, hardware_mac)
@@ -411,6 +413,33 @@ CREATE INDEX idx_audit_severity      ON audit_telemetry_logs(hospital_id, severi
 
 
 -- ============================================================
+-- 15. NEUROSHIELD SECURITY INCIDENTS (IDS)
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS security_incidents (
+    id                       UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    hospital_id              UUID         NOT NULL REFERENCES hospitals(id) ON DELETE CASCADE,
+    incident_type            VARCHAR(50)  NOT NULL,
+    severity                 VARCHAR(20)  NOT NULL DEFAULT 'WARNING',
+    device_id                VARCHAR(100) NOT NULL,
+    source_classification   VARCHAR(20)  NOT NULL DEFAULT 'UNTRUSTED',
+    source_ip                VARCHAR(50),
+    sequence_number_received BIGINT,
+    expected_min_sequence    BIGINT,
+    timestamp_received       TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    detail_message           VARCHAR(500) NOT NULL,
+    is_resolved              BOOLEAN      NOT NULL DEFAULT FALSE,
+    resolved_by_user_id      UUID         REFERENCES users(id) ON DELETE SET NULL,
+    resolved_at              TIMESTAMPTZ,
+    created_at               TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_incidents_hospital ON security_incidents(hospital_id);
+CREATE INDEX IF NOT EXISTS idx_security_incidents_created ON security_incidents(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_security_incidents_device ON security_incidents(device_id);
+
+
+-- ============================================================
 -- SCHEMA COMPLETE
--- Total Tables : 14  |  Total ENUMs: 11  |  Total Indexes: 17
+-- Total Tables : 15  |  Total ENUMs: 11  |  Total Indexes: 20
 -- ============================================================

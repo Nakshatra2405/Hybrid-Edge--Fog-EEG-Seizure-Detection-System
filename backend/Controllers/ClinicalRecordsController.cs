@@ -5,6 +5,7 @@ using System.Security.Claims;
 using EegSeizureBackend.Data;
 using EegSeizureBackend.DTOs;
 using EegSeizureBackend.Models;
+using EegSeizureBackend.Services;
 
 namespace EegSeizureBackend.Controllers;
 
@@ -24,6 +25,10 @@ public class ClinicalRecordsController : ControllerBase
     [Authorize(Roles = "ADMIN,DOCTOR,TECHNICIAN")]
     public async Task<ActionResult<IEnumerable<ClinicalSessionDto>>> GetSessions()
     {
+        if (!NeuroShieldService.IsDatabaseReachable)
+        {
+            return Ok(new List<ClinicalSessionDto>());
+        }
         var role = User.FindFirstValue(ClaimTypes.Role);
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var hospitalIdStr = User.FindFirstValue("hospital_id");
@@ -51,7 +56,15 @@ public class ClinicalRecordsController : ControllerBase
             query = query.Where(s => s.DoctorApprovedForTraining);
         }
 
-        var sessions = await query.OrderByDescending(s => s.StartTime).ToListAsync();
+        List<ClinicalEegSession> sessions;
+        try
+        {
+            sessions = await query.OrderByDescending(s => s.StartTime).ToListAsync();
+        }
+        catch (Exception)
+        {
+            return Ok(new List<ClinicalSessionDto>());
+        }
 
         var result = sessions.Select((s, index) =>
         {

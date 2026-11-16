@@ -17,24 +17,30 @@ import {
 
 export const Sidebar: React.FC = () => {
   const { user, logout } = useAuth();
-  const role = user?.role || 'ADMIN';
+  const role = user?.role;
 
-  // Role-specific navigation presets
-  let navItems = [
-    { name: 'Live Monitoring', path: '/', icon: Activity },
-    { name: 'Metrics Dashboard', path: '/metrics', icon: BarChart2 },
-    { name: 'Patient Management', path: '/patients', icon: Users },
-    { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
-    { name: 'Clinical Records', path: '/records', icon: FileText },
-    { name: 'Staff Management (RBAC)', path: '/staff-rbac', icon: ShieldAlert },
-    { name: 'Settings & Config', path: '/settings', icon: Settings },
-  ];
+  // Role-specific navigation presets (No missing-role default to ADMIN)
+  let navItems: { name: string; path: string; icon: any }[] = [];
+
+  if (role === 'ADMIN') {
+    navItems = [
+      { name: 'Live Monitoring', path: '/', icon: Activity },
+      { name: 'Security Center (IDS)', path: '/security-ids', icon: ShieldAlert },
+      { name: 'Metrics Dashboard', path: '/metrics', icon: BarChart2 },
+      { name: 'Patient Management', path: '/patients', icon: Users },
+      { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
+      { name: 'Clinical Records', path: '/records', icon: FileText },
+      { name: 'Staff Management (RBAC)', path: '/staff-rbac', icon: ShieldAlert },
+      { name: 'Settings & Config', path: '/settings', icon: Settings },
+    ];
+  }
 
   if (role === 'DOCTOR') {
     navItems = [
       { name: 'Live Monitoring', path: '/', icon: Activity },
       { name: 'Patient Management', path: '/patients', icon: Users },
       { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
+      { name: 'Clinical Records', path: '/records', icon: FileText },
       { name: 'Clinical Records', path: '/records', icon: FileText },
       { name: 'Settings & Config', path: '/settings', icon: Settings },
     ];
@@ -43,6 +49,7 @@ export const Sidebar: React.FC = () => {
       { name: 'Live Monitoring', path: '/', icon: Activity },
       { name: 'Patient Management', path: '/patients', icon: Users },
       { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
+      { name: 'Clinical Records', path: '/records', icon: FileText },
       { name: 'Settings & Config', path: '/settings', icon: Settings },
     ];
   } else if (role === 'TECHNICIAN') {
