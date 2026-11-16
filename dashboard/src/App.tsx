@@ -1,0 +1,371 @@
+import React, { useState, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { RBACProvider } from './context/RBACContext';
+import { MainLayout } from './components/layout/MainLayout';
+import { useTelemetry, TelemetryUpdate } from './hooks/useTelemetry';
+
+import { initialMockPatients, initialTelemetryEvents, initialSessionRecords } from './services/mockApi';
+import { Patient } from './types/patient';
+import { TelemetryEvent, EEGSessionRecord, TrainedModelVersion, AdminRequestNotification } from './types/telemetry';
+
+import { LiveMonitoringPage } from './pages/LiveMonitoringPage';
+import { MetricsDashboardPage } from './pages/MetricsDashboardPage';
+import { PatientManagementPage } from './pages/PatientManagementPage';
+import { ClinicalRecordsPage } from './pages/ClinicalRecordsPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { PatientManagementFixedPage } from './pages/PatientManagementFixedPage';
+import { StaffManagementRBACPage } from './pages/StaffManagementRBACPage';
+import { LoginPage } from './pages/LoginPage';
+import { SecurityCenterPage } from './pages/SecurityCenterPage';
+
+// Dedicated Technician Pages
+import { TechnicianDataReviewPage } from './pages/technician/TechnicianDataReviewPage';
+import { ModelTrainingPage } from './pages/technician/ModelTrainingPage';
+import { ModelDeploymentPage } from './pages/technician/ModelDeploymentPage';
+
+import { api } from './services/apiClient';
+
+const initialModelVersions: TrainedModelVersion[] = [
+  {
+    id: 'mod-v4.8',
+    versionName: 'AISeizureNet-v4.8-int8.tflite',
+    trainedDate: '2026-08-28',
+    trainedBy: 'Alex Rivera (BME Technician)',
+    sampleCount: 14,
+    accuracy: 98.4,
+    precision: 97.9,
+    recall: 98.1,
+    f1Score: 98.0,
+    confusionMatrix: { truePositive: 412, falsePositive: 8, trueNegative: 1240, falseNegative: 6 },
+    isDeployed: true,
+  },
+];
+
+export const AppContent: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const role = user?.role;
+
+  React.useEffect(() => {
+    if ((!user || !role) && location.pathname !== '/login') {
+      navigate('/login', { replace: true });
+    }
+  }, [user, role, location.pathname, navigate]);
+
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [events, setEvents] = useState<TelemetryEvent[]>(initialTelemetryEvents);
+  const [sessionRecords, setSessionRecords] = useState<EEGSessionRecord[]>([]);
+  const [modelVersions, setModelVersions] = useState<TrainedModelVersion[]>(initialModelVersions);
+  const [adminRequests, setAdminRequests] = useState<AdminRequestNotification[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // ── SignalR live telemetry ──────────────────────────────────────────────────
+  const handleTelemetryUpdate = useCallback((update: TelemetryUpdate) => {
+    if (!update.patientId) return; // unassigned node — ignore
+    setPatients((prev) =>
+      prev.map((p) => {
+        // Match by edgeNode assignment stored in p.node or by patientId if available
+        if (p.id === String(update.patientId) || p.mrn === String(update.patientId)) {
+          const isCritical = update.seizureProbability >= 0.70;
+          return {
+            ...p,
+            status: isCritical ? 'Critical' : p.status === 'Critical' && update.seizureProbability < 0.40 ? 'Monitoring' : p.status,
+            battery: `${update.batteryPercentage}%`,
+            node: update.nodeName || p.node,
+            vitals: {
+              ...p.vitals,
+              seizureProbability: update.seizureProbability,
+              eegAmplitude: Math.round(update.seizureProbability * 100),
+            },
+          };
+        }
+        return p;
+      })
+    );
+  }, []);
+
+  useTelemetry(handleTelemetryUpdate, !!user);
+
+  // Load live data from C# backend
+  const loadData = React.useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // 1. Fetch Patients (Role-scoped by backend)
+      if (role !== 'TECHNICIAN') {
+        const livePatients = await api.getPatients();
+        setPatients(livePatients);
+      }
+
+      // 2. Fetch Clinical Sessions (Role-scoped by backend)
+      const liveSessions = await api.getClinicalSessions();
+      setSessionRecords(liveSessions);
+
+      // 3. Fetch Models
+      if (role === 'TECHNICIAN' || role === 'ADMIN') {
+        const liveModels = await api.getModels();
+        if (liveModels && liveModels.length > 0) {
+          setModelVersions(liveModels);
+        }
+      }
+
+      // 4. Fetch Notifications
+      const liveNotifs = await api.getNotifications();
+      setAdminRequests(liveNotifs);
+    } catch (err) {
+      console.error('Failed to load live data from backend:', err);
+    }
+  }, [user, role]);
+
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleCallCode = async (p: Patient) => {
+    await api.callCode(p.room, p.name, `Emergency Code Blue triggered for ${p.name} in Room ${p.room}`);
+    alert(`🚨 CODE BLUE DISPATCHED!\n\nPatient: ${p.name} (${p.id})\nLocation: ${p.room}\n\nICU Crash Cart Team & On-Call Physician notified!`);
+    loadData();
+  };
+
+  const handleNotifyDoctor = (p: Patient) => {
+    alert(`🔔 URGENT TELEMETRY NOTIFICATION DISPATCHED!\n\nPatient: ${p.name}\nDoctor: ${p.doctor}\n\nNotification sent to physician mobile app.`);
+  };
+
+  const handleAddPatient = async (newPatient: Patient) => {
+    // Resolve doctor and nurse IDs if available from staff list
+    const staff = await api.getStaff();
+    const doc = staff.find((s) => s.name === newPatient.doctor);
+    const nurse = staff.find((s) => s.name === newPatient.staff);
+
+    const names = newPatient.name.trim().split(' ');
+    const firstName = names[0] || 'Unknown';
+    const lastName = names.slice(1).join(' ') || 'Patient';
+
+    const res = await api.createPatient({
+      mrn: newPatient.id,
+      firstName,
+      lastName,
+      dob: newPatient.dob || '1980-01-01',
+      gender: newPatient.gender || 'Male',
+      bloodGroup: newPatient.bloodGroup || 'O+',
+      assignedFloor: newPatient.floor || 'Floor 4 - ICU',
+      room: newPatient.room || '404',
+      assignedDoctorId: doc ? doc.id : null,
+      assignedNurseId: nurse ? nurse.id : null,
+      edgeNodeId: (newPatient as any).edgeNodeId || null,
+    });
+
+    if (res.success) {
+      alert(`✅ Patient ${newPatient.name} (${newPatient.id}) successfully admitted to Database & Ward!`);
+      loadData();
+    } else {
+      alert(`❌ Failed to admit patient: ${res.message}`);
+    }
+  };
+
+  const handleRequestAdmission = async (name: string, room: string, nurseName: string, details: string) => {
+    await api.requestAdmission(name, `${room} (Nurse: ${nurseName})`, details);
+    alert(`📩 Patient Admission Request for "${name}" (Assigned Nurse: ${nurseName}) submitted to System Admin!`);
+    loadData();
+  };
+
+  const handleDischargePatient = async (id: string) => {
+    const success = await api.dischargePatient(id);
+    if (success) {
+      alert(`✅ Patient discharged successfully from database & ward census.`);
+      loadData();
+    } else {
+      alert(`❌ Failed to discharge patient.`);
+    }
+  };
+
+  const handleRequestDischarge = async (p: Patient) => {
+    const res = await api.requestDischarge(p.id, `Physician requested discharge for ${p.name} (${p.mrn || p.id}).`);
+    if (res) {
+      alert(`📩 Discharge Request for "${p.name}" (${p.mrn || p.id}) submitted to System Admin!`);
+      loadData();
+    } else {
+      alert(`❌ Failed to submit discharge request.`);
+    }
+  };
+
+  // Doctor approves session for training
+  const handleToggleApproveSession = async (sessionId: string) => {
+    const success = await api.approveSession(sessionId);
+    if (success) {
+      alert(`🧠 EEG Session ${sessionId} approved by Doctor in database!\n\nIt is now reflected in your queue to send to the Technician.`);
+      loadData();
+    }
+  };
+
+  // Doctor submits approved sessions to Technician
+  const handleSendAllApprovedForTraining = async () => {
+    await api.sendDataForTraining();
+    alert('✅ Approved EEG sessions dispatched to Azure training queue in database!');
+    loadData();
+  };
+
+  // Technician adds doctor-approved sample to training queue
+  const handleTechnicianAddToTraining = (sessionId: string) => {
+    setSessionRecords((prev) =>
+      prev.map((rec) => {
+        if (rec.sessionId === sessionId) {
+          return { ...rec, addedToTechnicianQueue: true, technicianStatus: 'Added to Training' };
+        }
+        return rec;
+      })
+    );
+    alert(`✅ Session ${sessionId} added to the Model Training Pipeline! Go to Model Training & Eval to train.`);
+  };
+
+  // Technician saves new trained model
+  const handleAddNewTrainedModel = (newModel: TrainedModelVersion) => {
+    setModelVersions([newModel, ...modelVersions]);
+  };
+
+  // Technician deploys model to Edge
+  const handleDeployModelToEdge = async (id: string) => {
+    await api.deployModel(id);
+    alert('🚀 Model deployed via wireless BLE OTA to edge nodes in database!');
+    loadData();
+  };
+
+  if (!user) {
+    return <LoginPage onLoginSuccess={() => navigate('/')} />;
+  }
+
+  // Filter queued samples for technician training page
+  const queuedTrainingSamples = sessionRecords.filter((s) => s.addedToTechnicianQueue);
+
+  return (
+    <MainLayout
+      patientCount={patients.length}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      adminRequests={adminRequests}
+      onRefreshRequests={loadData}
+    >
+      <Routes>
+        {/* Technican Role Dedicated Routes */}
+        {role === 'TECHNICIAN' ? (
+          <>
+            <Route
+              path="/"
+              element={
+                <TechnicianDataReviewPage
+                  sessionRecords={sessionRecords}
+                  onAddToTrainingPipeline={handleTechnicianAddToTraining}
+                />
+              }
+            />
+            <Route
+              path="/technician-training"
+              element={
+                <ModelTrainingPage
+                  queuedSamples={queuedTrainingSamples}
+                  onAddNewTrainedModel={handleAddNewTrainedModel}
+                />
+              }
+            />
+            <Route
+              path="/technician-deployments"
+              element={
+                <ModelDeploymentPage
+                  modelVersions={modelVersions}
+                  onDeployModelToEdge={handleDeployModelToEdge}
+                />
+              }
+            />
+            <Route path="/metrics" element={<MetricsDashboardPage />} />
+            <Route
+              path="/settings"
+              element={
+                <SettingsPage
+                  sessionRecords={sessionRecords}
+                  onSendAllApprovedForTraining={handleSendAllApprovedForTraining}
+                />
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </>
+        ) : (
+          /* Clinical Roles Routes (ADMIN, DOCTOR, NURSE) */
+          <>
+            <Route
+              path="/"
+              element={
+                <LiveMonitoringPage
+                  patients={patients}
+                  events={events}
+                  searchQuery={searchQuery}
+                  onCallCode={handleCallCode}
+                  onNotifyDoctor={handleNotifyDoctor}
+                  onAddPatient={handleAddPatient as (p: Patient) => void}
+                  onRequestAdmission={handleRequestAdmission}
+                  onDischargePatient={handleDischargePatient}
+                  onRequestDischarge={handleRequestDischarge}
+                />
+              }
+            />
+            {role === 'ADMIN' && <Route path="/metrics" element={<MetricsDashboardPage />} />}
+            <Route
+              path="/patients"
+              element={
+                <PatientManagementPage
+                  patients={patients}
+                  onAddPatient={handleAddPatient as (p: Patient) => void}
+                  onRequestAdmission={handleRequestAdmission}
+                  onDischargePatient={handleDischargePatient}
+                  onRequestDischarge={handleRequestDischarge}
+                />
+              }
+            />
+            <Route
+              path="/patients-fixed"
+              element={<PatientManagementFixedPage patients={patients} />}
+            />
+            {role === 'DOCTOR' && (
+              <Route
+                path="/records"
+                element={
+                  <ClinicalRecordsPage
+                    sessionRecords={sessionRecords}
+                    onToggleApproveSession={handleToggleApproveSession}
+                  />
+                }
+              />
+            )}
+            {role === 'ADMIN' && <Route path="/staff-rbac" element={<StaffManagementRBACPage />} />}
+            {role === 'ADMIN' && <Route path="/security-ids" element={<SecurityCenterPage />} />}
+            <Route
+              path="/settings"
+              element={
+                <SettingsPage
+                  sessionRecords={sessionRecords}
+                  onSendAllApprovedForTraining={handleSendAllApprovedForTraining}
+                />
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </>
+        )}
+      </Routes>
+    </MainLayout>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <RBACProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </RBACProvider>
+    </AuthProvider>
+  );
+};
+
+export default App;

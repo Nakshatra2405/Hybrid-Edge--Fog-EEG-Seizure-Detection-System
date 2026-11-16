@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Schema & ERD Visualizer - Hybrid Edge-Fog EEG System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body { font-family: 'Inter', sans-serif; background-color: #0B0F17; color: #E2E8F0; }
+    .code-font { font-family: 'JetBrains Mono', monospace; }
+    .glass-card { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .table-card { transition: all 0.2s ease-in-out; }
+    .table-card:hover { border-color: #3B82F6; transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.15); }
+    .badge-pk { background: rgba(239, 68, 68, 0.15); color: #FCA5A5; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-fk { background: rgba(59, 130, 246, 0.15); color: #93C5FD; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .badge-uq { background: rgba(234, 179, 8, 0.15); color: #FDE047; border: 1px solid rgba(234, 179, 8, 0.3); }
+    .badge-role { background: rgba(168, 85, 247, 0.15); color: #D8B4FE; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-new { background: rgba(16, 185, 129, 0.15); color: #6EE7B7; border: 1px solid rgba(16, 185, 129, 0.3); }
+  </style>
+</head>
+<body class="min-h-screen pb-16">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-950/80 sticky top-0 z-50 backdrop-blur-md px-6 py-4">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-blue-600/20 border border-blue-500/30 rounded-xl text-blue-400">
+          <i data-lucide="database" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            EEG Seizure Detection System
+            <span class="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">Updated PostgreSQL Schema</span>
+          </h1>
+          <p class="text-xs text-slate-400">Top-Level Hospital Multi-Tenancy & Detailed Entity Relationships</p>
+        </div>
+      </div>
+
+      <!-- Quick Category Buttons -->
+      <div class="flex items-center gap-2 text-xs flex-wrap">
+        <span class="text-slate-400 font-medium mr-1">Filter View:</span>
+        <button onclick="filterCategory('all')" class="cat-btn px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium shadow-sm transition-all">All Tables (14)</button>
+        <button onclick="filterCategory('tenants')" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">Tenants & Auth</button>
+        <button onclick="filterCategory('roles')" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">Role Tables (4)</button>
+        <button onclick="filterCategory('clinical')" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">Patients & Clinical</button>
+        <button onclick="filterCategory('edge')" class="cat-btn px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all">IoT Edge & AI</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 mt-8">
+
+    <!-- Interactive Visual Entity Relationship Diagram (ERD) Card -->
+    <div class="glass-card p-6 rounded-2xl mb-8 border border-slate-800">
+      <div class="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="git-graph" class="w-5 h-5 text-blue-400"></i>
+          <h2 class="text-lg font-semibold text-white">Full Entity Relationship Diagram (ERD)</h2>
+        </div>
+        <span class="text-xs text-slate-400 bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700">Root Key: hospital_id</span>
+      </div>
+
+      <!-- ERD Graphic Canvas -->
+      <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 text-xs overflow-x-auto code-font">
+        <div class="min-w-[900px] flex flex-col gap-6">
+
+          <!-- Level 1: Tenant & Auth -->
+          <div class="flex items-center justify-center gap-12">
+            <div class="p-3 bg-indigo-950/60 border border-indigo-500/40 rounded-xl text-center w-52 shadow-lg shadow-indigo-950/50">
+              <span class="text-xs font-bold text-indigo-400 flex items-center justify-center gap-1"><i data-lucide="building-2" class="w-3.5 h-3.5"></i> hospitals</span>
+              <span class="text-[10px] text-slate-400 block mt-1">PK: id | UQ: code</span>
+            </div>
+            <div class="text-slate-600 font-bold text-lg">➔ 1:N ➔</div>
+            <div class="p-3 bg-blue-950/60 border border-blue-500/40 rounded-xl text-center w-52 shadow-lg shadow-blue-950/50">
+              <span class="text-xs font-bold text-blue-400 flex items-center justify-center gap-1"><i data-lucide="users" class="w-3.5 h-3.5"></i> users</span>
+              <span class="text-[10px] text-slate-400 block mt-1">PK: id | FK: hospital_id</span>
+            </div>
+          </div>
+
+          <!-- Vertical Connector Line -->
+          <div class="flex justify-center text-slate-600 font-bold text-sm -my-3">│ Inheritance & Role Extension (1:1)</div>
+
+          <!-- Level 2: Four Role Entities -->
+          <div class="grid grid-cols-4 gap-4 p-4 bg-slate-900/40 border border-slate-800 rounded-2xl">
+            
+            <!-- Admin -->
+            <div class="p-3 bg-purple-950/40 border border-purple-500/30 rounded-xl text-center">
+              <span class="text-xs font-bold text-purple-300 flex items-center justify-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> admins</span>
+              <span class="text-[10px] text-purple-200/60 block mt-1">PK: id | FK: user_id</span>
+              <span class="text-[9px] text-emerald-400 mt-1 block">created_at</span>
+            </div>
+
+            <!-- Doctor -->
+            <div class="p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-center">
+              <span class="text-xs font-bold text-emerald-300 flex items-center justify-center gap-1"><i data-lucide="stethoscope" class="w-3.5 h-3.5"></i> doctors</span>
+              <span class="text-[10px] text-emerald-200/60 block mt-1">PK: id | FK: user_id</span>
+              <span class="text-[9px] text-emerald-400 mt-1 block">license_no, created_at</span>
+            </div>
+
+            <!-- Nurse -->
+            <div class="p-3 bg-amber-950/40 border border-amber-500/30 rounded-xl text-center">
+              <span class="text-xs font-bold text-amber-300 flex items-center justify-center gap-1"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i> nurses</span>
+              <span class="text-[10px] text-amber-200/60 block mt-1">PK: id | FK: user_id</span>
+              <span class="text-[9px] text-amber-300 mt-1 block">assigned_floor, created_at</span>
+            </div>
+
+            <!-- Technician -->
+            <div class="p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-xl text-center">
+              <span class="text-xs font-bold text-cyan-300 flex items-center justify-center gap-1"><i data-lucide="cpu" class="w-3.5 h-3.5"></i> technicians</span>
+              <span class="text-[10px] text-cyan-200/60 block mt-1">PK: id | FK: user_id</span>
+              <span class="text-[9px] text-emerald-400 mt-1 block">created_at</span>
+            </div>
+
+          </div>
+
+          <!-- Vertical Connector Line -->
+          <div class="flex justify-center text-slate-600 font-bold text-sm -my-3">│ Care Team & Clinical Assignment</div>
+
+          <!-- Level 3: Patients & Doctor-Nurse Junction -->
+          <div class="flex items-center justify-around gap-6">
+            
+            <div class="p-3 bg-indigo-950/30 border border-indigo-500/30 rounded-xl text-center w-64">
+              <span class="text-xs font-bold text-indigo-300">doctor_nurse_assignments</span>
+              <span class="text-[10px] text-slate-400 block mt-1">FK: doctor_id ➔ doctors.id</span>
+              <span class="text-[10px] text-slate-400 block">FK: nurse_id ➔ nurses.id</span>
+            </div>
+
+            <div class="p-4 bg-emerald-950/40 border border-emerald-500/40 rounded-xl text-center w-72 shadow-lg shadow-emerald-950/40">
+              <span class="text-xs font-bold text-emerald-300 flex items-center justify-center gap-1"><i data-lucide="heart-pulse" class="w-3.5 h-3.5"></i> patients</span>
+              <span class="text-[10px] text-slate-300 block mt-1">FK: assigned_doctor_id ➔ doctors.id</span>
+              <span class="text-[10px] text-amber-300 block">FK: assigned_nurse_id ➔ nurses.id</span>
+              <div class="mt-2 text-[9px] bg-slate-900 px-2 py-1 rounded text-emerald-400 border border-slate-800">
+                assigned_floor (links nurse floor) + room
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Level 4: Hardware, AI Models, Clinical Sessions & Notifications -->
+          <div class="grid grid-cols-4 gap-4 mt-2">
+            
+            <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl">
+              <span class="text-xs font-bold text-cyan-300 block mb-1">edge_nodes</span>
+              <span class="text-[10px] text-slate-400 block">FK: patient_id</span>
+              <span class="text-[10px] text-emerald-400 font-bold block mt-1">+ room (location)</span>
+            </div>
+
+            <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl">
+              <span class="text-xs font-bold text-purple-300 block mb-1">ai_models</span>
+              <span class="text-[10px] text-slate-400 block">FK: trained_by_technician_id</span>
+              <span class="text-[10px] text-emerald-400 font-bold block mt-1">Explicit: acc, prec, recall, f1, tp, fp, tn, fn</span>
+            </div>
+
+            <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl">
+              <span class="text-xs font-bold text-amber-300 block mb-1">clinical_eeg_sessions</span>
+              <span class="text-[10px] text-slate-400 block">FK: doctor_id ➔ doctors.id</span>
+              <span class="text-[10px] text-emerald-400 font-bold block mt-1">+ approved_at (timestamp)</span>
+            </div>
+
+            <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl">
+              <span class="text-xs font-bold text-purple-300 block mb-1">admin_notifications</span>
+              <span class="text-[10px] text-slate-400 block">FK: requested_by_doctor_id</span>
+              <span class="text-[10px] text-emerald-400 font-bold block mt-1">+ sent_at, received_at</span>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Input -->
+    <div class="mb-6 flex items-center justify-between gap-4">
+      <div class="relative flex-1 max-w-md">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-500"></i>
+        <input type="text" id="searchInput" oninput="searchTables()" placeholder="Search tables or attributes..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+      </div>
+      <div class="text-xs text-slate-400">
+        Total Tables: <span class="text-white font-semibold">14</span> | Audit Logs: <span class="text-emerald-400 font-semibold font-mono">audit_telemetry_logs</span>
+      </div>
+    </div>
+
+    <!-- Tables Grid Container -->
+    <div id="tablesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- 1. HOSPITALS -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-slate-800" data-cat="tenants">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="building-2" class="w-5 h-5 text-indigo-400"></i>
+            <h3 class="text-base font-bold text-white code-font">hospitals</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium">Tenant Root</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span>UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span>name</span><span>VARCHAR(255)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-uq px-1 rounded text-[9px]">UQ</span> code</span><span>VARCHAR(50)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span>created_at</span><span>TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+      <!-- 2. USERS -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-slate-800" data-cat="tenants">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="users" class="w-5 h-5 text-blue-400"></i>
+            <h3 class="text-base font-bold text-white code-font">users</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium">Base Credentials</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span>UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-fk px-1 rounded text-[9px]">FK</span> hospital_id</span><span>UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-uq px-1 rounded text-[9px]">UQ</span> email</span><span>VARCHAR(255)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span>full_name / password</span><span>VARCHAR</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-purple-300">role</span><span class="text-purple-300">user_role ENUM</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span>is_active</span><span>BOOLEAN DEFAULT TRUE</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-emerald-400 font-bold">created_at / updated_at</span><span class="text-emerald-400">2 x TIMESTAMPTZ</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-rose-400 font-bold">is_deleted / deleted_at</span><span class="text-rose-400 font-bold">Soft Delete</span></div>
+        </div>
+      </div>
+
+      <!-- 3. ADMINS -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-purple-900/40 bg-purple-950/10" data-cat="roles">
+        <div class="flex items-center justify-between mb-3 border-b border-purple-900/40 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="shield-check" class="w-5 h-5 text-purple-400"></i>
+            <h3 class="text-base font-bold text-purple-300 code-font">admins</h3>
+          </div>
+          <span class="badge-role px-2 py-0.5 text-[10px] rounded-full">Role: ADMIN</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span class="text-purple-300 font-bold">UUID (admin_id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-fk px-1 rounded text-[9px]">FK</span> user_id</span><span class="text-slate-400">UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white">admin_code / access_level</span><span class="text-slate-400">VARCHAR</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-emerald-400 font-bold flex items-center gap-1"><span class="badge-new px-1 rounded text-[9px]">NEW</span> created_at</span><span class="text-emerald-400 font-bold">TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+      <!-- 4. DOCTORS -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-emerald-900/40 bg-emerald-950/10" data-cat="roles">
+        <div class="flex items-center justify-between mb-3 border-b border-emerald-900/40 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="stethoscope" class="w-5 h-5 text-emerald-400"></i>
+            <h3 class="text-base font-bold text-emerald-300 code-font">doctors</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Role: DOCTOR</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span class="text-emerald-300 font-bold">UUID (doctor_id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-fk px-1 rounded text-[9px]">FK</span> user_id</span><span class="text-slate-400">UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white">license_number / specialization</span><span class="text-slate-400">VARCHAR</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-emerald-400 font-bold flex items-center gap-1"><span class="badge-new px-1 rounded text-[9px]">NEW</span> created_at</span><span class="text-emerald-400 font-bold">TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+      <!-- 5. NURSES -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-amber-900/40 bg-amber-950/10" data-cat="roles">
+        <div class="flex items-center justify-between mb-3 border-b border-amber-900/40 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="user-plus" class="w-5 h-5 text-amber-400"></i>
+            <h3 class="text-base font-bold text-amber-300 code-font">nurses</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">Role: NURSE</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span class="text-amber-300 font-bold">UUID (nurse_id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-fk px-1 rounded text-[9px]">FK</span> user_id</span><span class="text-slate-400">UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-amber-300 font-bold">assigned_floor</span><span class="text-amber-300">VARCHAR(100)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-emerald-400 font-bold flex items-center gap-1"><span class="badge-new px-1 rounded text-[9px]">NEW</span> created_at</span><span class="text-emerald-400 font-bold">TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+      <!-- 6. TECHNICIANS (SIMPLIFIED) -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-cyan-900/40 bg-cyan-950/10" data-cat="roles">
+        <div class="flex items-center justify-between mb-3 border-b border-cyan-900/40 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="cpu" class="w-5 h-5 text-cyan-400"></i>
+            <h3 class="text-base font-bold text-cyan-300 code-font">technicians</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Role: TECHNICIAN</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-3">Clean role table (certification & lab station columns removed as requested).</p>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span class="text-cyan-300 font-bold">UUID (technician_id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-fk px-1 rounded text-[9px]">FK</span> user_id</span><span class="text-slate-400">UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-fk px-1 rounded text-[9px]">FK</span> hospital_id</span><span class="text-slate-400">UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-emerald-400 font-bold flex items-center gap-1"><span class="badge-new px-1 rounded text-[9px]">NEW</span> created_at</span><span class="text-emerald-400 font-bold">TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+      <!-- 7. PATIENTS (FLOOR & ROOM SPLIT) -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-emerald-900/30" data-cat="clinical">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="heart-pulse" class="w-5 h-5 text-emerald-400"></i>
+            <h3 class="text-base font-bold text-white code-font">patients</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Clinical Entity</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span>UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-uq px-1 rounded text-[9px]">UQ</span> mrn</span><span class="text-slate-300">VARCHAR(50) (Patient ID)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-amber-300 font-bold flex items-center gap-1"><span class="badge-new px-1 rounded text-[9px]">UPDATED</span> assigned_floor</span><span class="text-amber-300 font-bold">VARCHAR(100)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-emerald-300 font-bold flex items-center gap-1"><span class="badge-new px-1 rounded text-[9px]">UPDATED</span> room</span><span class="text-emerald-300 font-bold">VARCHAR(50)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-fk px-1 rounded text-[9px]">FK</span> assigned_doctor_id</span><span class="text-emerald-300">UUID (doctors.id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-fk px-1 rounded text-[9px]">FK</span> assigned_nurse_id</span><span class="text-amber-300">UUID (nurses.id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-emerald-400 font-bold">created_at / updated_at</span><span class="text-emerald-400">2 x TIMESTAMPTZ</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-amber-400 font-bold">discharged_at</span><span class="text-amber-400">TIMESTAMPTZ NULL</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-rose-400 font-bold">is_deleted / deleted_at</span><span class="text-rose-400 font-bold">Soft Delete</span></div>
+        </div>
+      </div>
+
+      <!-- 8. EDGE HARDWARE NODES (ROOM ATTRIBUTE ADDED) -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-slate-800" data-cat="edge">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="radio" class="w-5 h-5 text-cyan-400"></i>
+            <h3 class="text-base font-bold text-white code-font">edge_nodes</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">IoT Hardware</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span>UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span>node_name / hardware_mac</span><span>VARCHAR</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-emerald-400 font-bold">room</span><span class="text-emerald-400 font-bold">VARCHAR(50)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-fk px-1 rounded text-[9px]">FK</span> patient_id</span><span>UUID (patients.id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span>battery_percentage</span><span>INT (0-100)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-cyan-300 font-bold">status</span><span class="text-cyan-300">ONLINE/OFFLINE/ALERT/DISCONNECTED</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-emerald-400 font-bold">updated_at</span><span class="text-emerald-400">TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+      <!-- 9. AI MODELS (EXPLICIT SEPARATE COLUMNS FOR ACCURACY, PRECISION, RECALL, F1, TP, FP, TN, FN) -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-purple-900/40 bg-purple-950/10" data-cat="edge">
+        <div class="flex items-center justify-between mb-3 border-b border-purple-900/40 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="brain-circuit" class="w-5 h-5 text-purple-400"></i>
+            <h3 class="text-base font-bold text-purple-300 code-font">ai_models</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/20">Explicit Columns</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span class="text-purple-300">UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-fk px-1 rounded text-[9px]">FK</span> trained_by_technician_id</span><span class="text-cyan-300 font-bold">UUID (technicians.id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-purple-200">accuracy, precision, recall, f1_score</span><span class="text-purple-300 font-bold">4 x DECIMAL(5,2)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-purple-200">true_positive, false_positive, true_negative, false_negative</span><span class="text-purple-300 font-bold">4 x INT</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-emerald-400 font-bold">created_at / updated_at</span><span class="text-emerald-400">2 x TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+      <!-- 10. CLINICAL EEG SESSIONS (APPROVED_AT ADDED) -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-slate-800" data-cat="clinical">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="activity" class="w-5 h-5 text-emerald-400"></i>
+            <h3 class="text-base font-bold text-white code-font">clinical_eeg_sessions</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-slate-800 text-slate-300 border border-slate-700">Clinical Session</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span>UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-fk px-1 rounded text-[9px]">FK</span> doctor_id</span><span class="text-emerald-300">UUID (doctors.id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span>doctor_approved_for_training</span><span>BOOLEAN</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-emerald-400 font-bold flex items-center gap-1"><span class="badge-new px-1 rounded text-[9px]">NEW</span> approved_at</span><span class="text-emerald-400 font-bold">TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+      <!-- 11. ADMIN NOTIFICATIONS (SENT & RECEIVED TIMESTAMPS) -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-purple-900/30" data-cat="tenants">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="bell" class="w-5 h-5 text-purple-400"></i>
+            <h3 class="text-base font-bold text-white code-font">admin_notifications</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">Request Dispatch</span>
+        </div>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span>UUID</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span><span class="badge-fk px-1 rounded text-[9px]">FK</span> requested_by_doctor_id</span><span class="text-emerald-300">UUID (doctors.id)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span>type / status / patient_name</span><span>VARCHAR / ENUM</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-slate-300">details</span><span class="text-slate-300">TEXT (notes)</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-emerald-400 font-bold">sent_at / received_at</span><span class="text-emerald-400">2 x TIMESTAMPTZ</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-amber-400 font-bold">resolved_at</span><span class="text-amber-400">TIMESTAMPTZ NULL</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/60 rounded border border-slate-800"><span class="text-emerald-400 font-bold">updated_at</span><span class="text-emerald-400">TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+      <!-- 12. AUDIT TELEMETRY LOGS (SYSTEM LOGS TABLE) -->
+      <div class="table-card glass-card rounded-2xl p-5 border border-emerald-900/40 bg-emerald-950/10" data-cat="tenants">
+        <div class="flex items-center justify-between mb-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="file-text" class="w-5 h-5 text-emerald-400"></i>
+            <h3 class="text-base font-bold text-emerald-300 code-font">audit_telemetry_logs</h3>
+          </div>
+          <span class="px-2 py-0.5 text-[10px] rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">System Audit Trail</span>
+        </div>
+        <p class="text-xs text-slate-400 mb-3">Logs user actions, code calls, battery drops, seizure spikes & model deployments.</p>
+        <div class="space-y-2 text-xs code-font">
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span class="text-white"><span class="badge-pk px-1 rounded text-[9px]">PK</span> id</span><span class="text-emerald-300 font-bold">BIGSERIAL</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span>event_type</span><span class="text-slate-300 font-bold">log_event_type ENUM</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span>severity</span><span class="text-slate-300 font-bold">log_severity ENUM</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span>title / description</span><span class="text-slate-400">VARCHAR / TEXT</span></div>
+          <div class="flex justify-between p-2 bg-slate-900/80 rounded border border-slate-800"><span>created_at</span><span class="text-slate-400">TIMESTAMPTZ</span></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    function filterCategory(cat) {
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+      event.target.classList.remove('bg-slate-800', 'text-slate-300');
+      event.target.classList.add('bg-blue-600', 'text-white');
+
+      const cards = document.querySelectorAll('.table-card');
+      cards.forEach(card => {
+        if (cat === 'all' || card.dataset.cat === cat) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    function searchTables() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const cards = document.querySelectorAll('.table-card');
+      cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        card.style.display = text.includes(q) ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "dataset": "UCI Epileptic Seizure Recognition",
+  "model_name": "RandomForest_Baseline",
+  "sample_count": 1725,
+  "accuracy": 87.3,
+  "precision": 87.95,
+  "recall_sensitivity": 42.32,
+  "specificity": 98.55,
+  "f1_score": 57.14,
+  "balanced_accuracy": 70.43,
+  "true_positive": 146,
+  "false_positive": 20,
+  "true_negative": 1360,
+  "false_negative": 199,
+  "confusion_matrix": [
+    [
+      1360,
+      20
+    ],
+    [
+      199,
+      146
+    ]
+  ],
+  "model_size_kb": 2962.37
+}
