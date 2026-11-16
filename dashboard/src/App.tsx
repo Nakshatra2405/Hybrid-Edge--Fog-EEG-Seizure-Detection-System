@@ -325,7 +325,7 @@ export const AppContent: React.FC = () => {
               path="/patients-fixed"
               element={<PatientManagementFixedPage patients={patients} />}
             />
-            {role === 'DOCTOR' && (
+            {(role === 'DOCTOR' || role === 'ADMIN') && (
               <Route
                 path="/records"
                 element={

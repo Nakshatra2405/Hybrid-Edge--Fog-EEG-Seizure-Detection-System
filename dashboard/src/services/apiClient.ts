@@ -156,6 +156,43 @@ export const api = {
     }
   },
 
+  // Get raw EEG sample waveform for clinical inspection
+  async getSessionWaveform(sessionId: string): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/clinical-records/${sessionId}/sample-waveform`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch EEG session waveform');
+      return await parseJsonSafe(res);
+    } catch (err) {
+      console.error('API Error in getSessionWaveform:', err);
+      return null;
+    }
+  },
+
+  // Export session as EDF+ standard clinical time-series file
+  async exportSessionEdf(sessionId: string, fileName?: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/clinical-records/${sessionId}/export-edf`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to export EDF file');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName || `EEG_Session_${sessionId.substring(0, 8)}.edf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      return true;
+    } catch (err) {
+      console.error('API Error in exportSessionEdf:', err);
+      return false;
+    }
+  },
+
   // 3. AI Models
   async getModels(): Promise<TrainedModelVersion[]> {
     try {

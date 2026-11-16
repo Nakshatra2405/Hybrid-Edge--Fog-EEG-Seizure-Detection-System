@@ -19,10 +19,10 @@ const mockAccuracyData = [
 
 interface SystemMetrics {
   totalPatients: number;
-  criticalPatients: number;
-  onlineNodes: number;
-  avgEdgeLatencyMs: number;
-  modelRecall: number;
+  criticalCount: number;
+  onlineNodesCount: number;
+  averageLatencyMs: number;
+  modelSensitivityPercent: number;
   modelF1Score: number;
 }
 
@@ -82,7 +82,7 @@ export const MetricsDashboardPage: React.FC = () => {
             <Zap className="w-4 h-4 text-teal-600" />
           </div>
           <h3 className="text-2xl font-bold text-teal-700 mt-1">
-            {metrics ? `${metrics.avgEdgeLatencyMs} ms` : '4.2 ms'}
+            {metrics?.averageLatencyMs != null ? `${Number(metrics.averageLatencyMs).toFixed(1)} ms` : '4.2 ms'}
           </h3>
           <p className="text-[11px] text-teal-600 mt-1.5 flex items-center gap-1">
             <TrendingDown className="w-3.5 h-3.5" /> -0.8ms vs baseline (Edge INT8)
@@ -95,7 +95,7 @@ export const MetricsDashboardPage: React.FC = () => {
             <ShieldCheck className="w-4 h-4 text-sky-600" />
           </div>
           <h3 className="text-2xl font-bold text-sky-700 mt-1">
-            {metrics ? `${metrics.modelRecall.toFixed(1)} %` : '98.4 %'}
+            {metrics?.modelSensitivityPercent != null ? `${Number(metrics.modelSensitivityPercent).toFixed(1)} %` : '98.4 %'}
           </h3>
           <p className="text-[11px] text-sky-600 mt-1.5 flex items-center gap-1">
             <CheckCircle className="w-3.5 h-3.5" /> CHB-MIT Corpus Validated
@@ -108,10 +108,10 @@ export const MetricsDashboardPage: React.FC = () => {
             <Cpu className="w-4 h-4 text-red-500" />
           </div>
           <h3 className="text-2xl font-bold text-slate-900 mt-1">
-            {metrics ? `${metrics.criticalPatients} / ${metrics.totalPatients}` : '— / —'}
+            {metrics ? `${metrics.criticalCount ?? 0} / ${metrics.totalPatients ?? 0}` : '— / —'}
           </h3>
           <p className="text-[11px] text-slate-500 mt-1.5">
-            {metrics ? `${metrics.totalPatients} total admitted` : 'Loading…'}
+            {metrics ? `${metrics.totalPatients ?? 0} total admitted` : 'Loading…'}
           </p>
         </div>
 
@@ -121,10 +121,10 @@ export const MetricsDashboardPage: React.FC = () => {
             <BatteryCharging className="w-4 h-4 text-amber-500" />
           </div>
           <h3 className="text-2xl font-bold text-amber-600 mt-1">
-            {metrics ? `${metrics.onlineNodes} Online` : '— Online'}
+            {metrics?.onlineNodesCount != null ? `${metrics.onlineNodesCount} Online` : '— Online'}
           </h3>
           <p className="text-[11px] text-amber-600 mt-1.5 font-mono">
-            F1 Score: {metrics ? `${metrics.modelF1Score.toFixed(2)}%` : '98.00%'}
+            F1 Score: {metrics?.modelF1Score != null ? `${Number(metrics.modelF1Score).toFixed(2)}%` : '98.00%'}
           </p>
         </div>
       </div>

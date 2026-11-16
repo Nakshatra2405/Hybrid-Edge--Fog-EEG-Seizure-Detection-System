@@ -25,6 +25,7 @@ export const Sidebar: React.FC = () => {
     { name: 'Metrics Dashboard', path: '/metrics', icon: BarChart2 },
     { name: 'Patient Management', path: '/patients', icon: Users },
     { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
+    { name: 'Clinical Records', path: '/records', icon: FileText },
     { name: 'Staff Management (RBAC)', path: '/staff-rbac', icon: ShieldAlert },
     { name: 'Settings & Config', path: '/settings', icon: Settings },
   ];
