@@ -239,13 +239,34 @@ public record CreateEdgeNodeDto(
     string Room
 );
 
+public record LatencyPointDto(
+    string Time,
+    int EdgeLatencyMs,
+    decimal SeizureProbabilityPercent,
+    string NodeName
+);
+
+public record ModelBenchmarkPointDto(
+    string Version,
+    decimal Accuracy,
+    decimal Precision,
+    decimal Recall,
+    decimal F1Score,
+    bool IsDeployed
+);
+
 public record SystemMetricsDto(
     int TotalPatients,
     int CriticalCount,
     int OnlineNodesCount,
     decimal AverageLatencyMs,
     decimal ModelSensitivityPercent,
-    decimal ModelF1Score
+    decimal ModelF1Score,
+    string ActiveModelVersion,
+    int TotalNodesCount,
+    int AlertNodesCount,
+    List<LatencyPointDto> RecentTelemetry,
+    List<ModelBenchmarkPointDto> ModelBenchmarks
 );
 
 public record AuditLogDto(

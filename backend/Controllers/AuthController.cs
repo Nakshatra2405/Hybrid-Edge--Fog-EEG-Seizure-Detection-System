@@ -27,18 +27,19 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
         User? user = null;
-        if (NeuroShieldService.IsDatabaseReachable)
+        try
         {
-            try
-            {
-                user = await _db.Users
-                    .Include(u => u.Admin)
-                    .Include(u => u.Doctor)
-                    .Include(u => u.Nurse)
-                    .Include(u => u.Technician)
-                    .FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower() && !u.IsDeleted);
+            user = await _db.Users
+                .Include(u => u.Admin)
+                .Include(u => u.Doctor)
+                .Include(u => u.Nurse)
+                .Include(u => u.Technician)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == request.Email.ToLower() && !u.IsDeleted);
 
-                if (user == null || !_auth.VerifyPassword(request.Password, user.PasswordHash))
+            if (user != null)
+            {
+                NeuroShieldService.IsDatabaseReachable = true;
+                if (!_auth.VerifyPassword(request.Password, user.PasswordHash))
                 {
                     return Unauthorized(new { message = "Invalid email or password" });
                 }
@@ -48,10 +49,10 @@ public class AuthController : ControllerBase
                     return Unauthorized(new { message = "Account has been deactivated. Please contact your administrator." });
                 }
             }
-            catch (Exception)
-            {
-                NeuroShieldService.IsDatabaseReachable = false;
-            }
+        }
+        catch (Exception)
+        {
+            NeuroShieldService.IsDatabaseReachable = false;
         }
 
         if (user == null && !NeuroShieldService.IsDatabaseReachable)

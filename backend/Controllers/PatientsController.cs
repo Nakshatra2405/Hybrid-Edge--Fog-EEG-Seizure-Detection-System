@@ -27,10 +27,6 @@ public class PatientsController : ControllerBase
         [FromQuery] string? floor,
         [FromQuery] string? search)
     {
-        if (!NeuroShieldService.IsDatabaseReachable)
-        {
-            return Ok(new List<PatientResponseDto>());
-        }
         var role = User.FindFirstValue(ClaimTypes.Role);
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var hospitalIdStr = User.FindFirstValue("hospital_id");
@@ -56,14 +52,26 @@ public class PatientsController : ControllerBase
         if (role == "DOCTOR")
         {
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return Ok(new List<PatientResponseDto>());
-            query = query.Where(p => p.AssignedDoctorId == doctor.Id);
+            if (doctor != null)
+            {
+                var assignedCount = await _db.Patients.CountAsync(p => p.HospitalId == hospitalId && !p.IsDeleted && p.AssignedDoctorId == doctor.Id);
+                if (assignedCount > 0)
+                {
+                    query = query.Where(p => p.AssignedDoctorId == doctor.Id);
+                }
+            }
         }
         else if (role == "NURSE")
         {
             var nurse = await _db.Nurses.FirstOrDefaultAsync(n => n.UserId == userId);
-            if (nurse == null) return Ok(new List<PatientResponseDto>());
-            query = query.Where(p => p.AssignedNurseId == nurse.Id);
+            if (nurse != null)
+            {
+                var assignedCount = await _db.Patients.CountAsync(p => p.HospitalId == hospitalId && !p.IsDeleted && p.AssignedNurseId == nurse.Id);
+                if (assignedCount > 0)
+                {
+                    query = query.Where(p => p.AssignedNurseId == nurse.Id);
+                }
+            }
         }
 
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<PatientStatus>(status, true, out var patientStatus))

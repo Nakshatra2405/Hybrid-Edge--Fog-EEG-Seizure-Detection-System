@@ -41,7 +41,6 @@ export const Sidebar: React.FC = () => {
       { name: 'Patient Management', path: '/patients', icon: Users },
       { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
       { name: 'Clinical Records', path: '/records', icon: FileText },
-      { name: 'Clinical Records', path: '/records', icon: FileText },
       { name: 'Settings & Config', path: '/settings', icon: Settings },
     ];
   } else if (role === 'NURSE') {

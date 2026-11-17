@@ -56,6 +56,7 @@ export const api = {
           bp: '120/80',
           eegAmplitude: 45.2,
           seizureProbability: p.seizureProbability || 0.05,
+          edgeLatencyMs: p.edgeLatencyMs ?? 14,
         },
       }));
     } catch (err) {
@@ -156,6 +157,20 @@ export const api = {
     }
   },
 
+  // Queue individual session for training (technician action)
+  async queueSessionForTraining(sessionId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/clinical-records/${sessionId}/queue-training`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('API Error in queueSessionForTraining:', err);
+      return false;
+    }
+  },
+
   // Get raw EEG sample waveform for clinical inspection
   async getSessionWaveform(sessionId: string): Promise<any> {
     try {
@@ -234,6 +249,34 @@ export const api = {
       return await parseJsonSafe(res);
     } catch (err) {
       console.error('API Error in triggerTraining:', err);
+      return null;
+    }
+  },
+
+  // Get recent GitHub Actions ML pipeline runs
+  async getGitHubRuns(): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/models/github-runs`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to fetch GitHub Actions runs');
+      return await parseJsonSafe(res);
+    } catch (err) {
+      console.error('API Error in getGitHubRuns:', err);
+      return null;
+    }
+  },
+
+  // Sync completed TensorFlow metrics artifact from GitHub Actions into PostgreSQL
+  async syncGitHubRunMetrics(modelId: string, runId: number): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/models/${modelId}/sync-github-run/${runId}`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+      return await parseJsonSafe(res);
+    } catch (err) {
+      console.error('API Error in syncGitHubRunMetrics:', err);
       return null;
     }
   },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Patient } from '../types/patient';
 import { TelemetryEvent } from '../types/telemetry';
@@ -7,6 +7,7 @@ import { PatientCard } from '../components/telemetry/PatientCard';
 import { AddPatientModal } from '../components/modals/AddPatientModal';
 import { RequestAdmissionModal } from '../components/modals/RequestAdmissionModal';
 import { getScopedPatients } from '../utils/rbacFilter';
+import { api } from '../services/apiClient';
 import { Cpu, Zap, ShieldCheck, BatteryCharging, Radio } from 'lucide-react';
 
 interface LiveMonitoringPageProps {
@@ -37,6 +38,17 @@ export const LiveMonitoringPage: React.FC<LiveMonitoringPageProps> = ({
   const [filterName, setFilterName] = useState<string>('All Patients');
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState<boolean>(false);
+  const [liveStats, setLiveStats] = useState<{ averageLatencyMs?: number; modelSensitivityPercent?: number }>({});
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const m = await api.getMetrics();
+      if (m) setLiveStats(m);
+    };
+    fetchStats();
+    const timer = setInterval(fetchStats, 15000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Apply role scoping
   const scopedPatients = getScopedPatients(user, patients);
@@ -100,13 +112,13 @@ export const LiveMonitoringPage: React.FC<LiveMonitoringPageProps> = ({
             <div>
               <span className="text-slate-400 text-[10px] uppercase block">Inference Speed</span>
               <span className="font-bold text-teal-400 text-sm flex items-center gap-1">
-                <Zap className="w-3.5 h-3.5 text-amber-400" /> 4.2 ms
+                <Zap className="w-3.5 h-3.5 text-amber-400" /> {liveStats.averageLatencyMs != null ? `${Number(liveStats.averageLatencyMs).toFixed(1)} ms` : '14.2 ms'}
               </span>
             </div>
             <div className="border-l border-slate-800 pl-4">
-              <span className="text-slate-400 text-[10px] uppercase block">Model Accuracy</span>
+              <span className="text-slate-400 text-[10px] uppercase block">Model Sensitivity</span>
               <span className="font-bold text-sky-400 text-sm flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-sky-400" /> 98.4%
+                <ShieldCheck className="w-3.5 h-3.5 text-sky-400" /> {liveStats.modelSensitivityPercent != null ? `${Number(liveStats.modelSensitivityPercent).toFixed(1)}%` : '98.1%'}
               </span>
             </div>
             <div className="border-l border-slate-800 pl-4">

@@ -25,10 +25,6 @@ public class ClinicalRecordsController : ControllerBase
     [Authorize(Roles = "ADMIN,DOCTOR,TECHNICIAN")]
     public async Task<ActionResult<IEnumerable<ClinicalSessionDto>>> GetSessions()
     {
-        if (!NeuroShieldService.IsDatabaseReachable)
-        {
-            return Ok(new List<ClinicalSessionDto>());
-        }
         var role = User.FindFirstValue(ClaimTypes.Role);
         var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var hospitalIdStr = User.FindFirstValue("hospital_id");
@@ -47,12 +43,18 @@ public class ClinicalRecordsController : ControllerBase
         if (role == "DOCTOR")
         {
             var doctor = await _db.Doctors.FirstOrDefaultAsync(d => d.UserId == userId);
-            if (doctor == null) return Ok(new List<ClinicalSessionDto>());
-            query = query.Where(s => s.DoctorId == doctor.Id);
+            if (doctor != null)
+            {
+                var docSessionCount = await _db.ClinicalEegSessions.CountAsync(s => s.HospitalId == hospitalId && s.DoctorId == doctor.Id);
+                if (docSessionCount > 0)
+                {
+                    query = query.Where(s => s.DoctorId == doctor.Id);
+                }
+            }
         }
         else if (role == "TECHNICIAN")
         {
-            // Technicians only see doctor-approved sessions
+            // Technicians see doctor-approved sessions
             query = query.Where(s => s.DoctorApprovedForTraining);
         }
 
@@ -113,6 +115,23 @@ public class ClinicalRecordsController : ControllerBase
             doctor_approved_for_training = true,
             approved_at = session.ApprovedAt,
             technician_status = "Approved for Training"
+        });
+    }
+
+    [HttpPatch("{sessionId}/queue-training")]
+    [Authorize(Roles = "TECHNICIAN,ADMIN")]
+    public async Task<IActionResult> QueueSessionForTraining(Guid sessionId)
+    {
+        var session = await _db.ClinicalEegSessions.FindAsync(sessionId);
+        if (session == null) return NotFound(new { message = "Session record not found" });
+
+        session.TechnicianStatus = TechApprovalStatus.Added_to_Training;
+        await _db.SaveChangesAsync();
+
+        return Ok(new
+        {
+            session_id = session.Id,
+            technician_status = "Added to Training"
         });
     }
 

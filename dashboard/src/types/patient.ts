@@ -6,6 +6,7 @@ export interface PatientVitals {
   bp: string; // mmHg e.g. 120/80
   eegAmplitude: number; // uV
   seizureProbability: number; // 0 to 1
+  edgeLatencyMs?: number; // ms
 }
 
 export interface Patient {

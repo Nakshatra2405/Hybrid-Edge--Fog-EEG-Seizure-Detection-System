@@ -63,11 +63,12 @@ export const AppContent: React.FC = () => {
 
   // ── SignalR live telemetry ──────────────────────────────────────────────────
   const handleTelemetryUpdate = useCallback((update: TelemetryUpdate) => {
-    if (!update.patientId) return; // unassigned node — ignore
+    if (!update.patientId && !update.nodeName) return;
     setPatients((prev) =>
       prev.map((p) => {
-        // Match by edgeNode assignment stored in p.node or by patientId if available
-        if (p.id === String(update.patientId) || p.mrn === String(update.patientId)) {
+        const matchesId = update.patientId && (p.id === String(update.patientId) || p.mrn === String(update.patientId));
+        const matchesNode = update.nodeName && p.node && p.node.toLowerCase() === update.nodeName.toLowerCase();
+        if (matchesId || matchesNode) {
           const isCritical = update.seizureProbability >= 0.70;
           return {
             ...p,
@@ -78,6 +79,7 @@ export const AppContent: React.FC = () => {
               ...p.vitals,
               seizureProbability: update.seizureProbability,
               eegAmplitude: Math.round(update.seizureProbability * 100),
+              edgeLatencyMs: update.edgeLatencyMs ?? p.vitals.edgeLatencyMs,
             },
           };
         }
@@ -208,7 +210,8 @@ export const AppContent: React.FC = () => {
   };
 
   // Technician adds doctor-approved sample to training queue
-  const handleTechnicianAddToTraining = (sessionId: string) => {
+  const handleTechnicianAddToTraining = async (sessionId: string) => {
+    await api.queueSessionForTraining(sessionId);
     setSessionRecords((prev) =>
       prev.map((rec) => {
         if (rec.sessionId === sessionId) {
@@ -217,12 +220,14 @@ export const AppContent: React.FC = () => {
         return rec;
       })
     );
-    alert(`✅ Session ${sessionId} added to the Model Training Pipeline! Go to Model Training & Eval to train.`);
+    alert(`✅ Session ${sessionId} added to the Model Training Pipeline in database! Go to Model Training & Eval to train.`);
+    loadData();
   };
 
-  // Technician saves new trained model
-  const handleAddNewTrainedModel = (newModel: TrainedModelVersion) => {
-    setModelVersions([newModel, ...modelVersions]);
+  // Technician saves/syncs trained model and reloads DB catalog
+  const handleAddNewTrainedModel = async (newModel: TrainedModelVersion) => {
+    setModelVersions((prev) => [newModel, ...prev.filter((m) => m.id !== newModel.id)]);
+    loadData();
   };
 
   // Technician deploys model to Edge

@@ -40,8 +40,21 @@ export const Header: React.FC<HeaderProps> = ({
   const [timeStr, setTimeStr] = useState<string>('');
   const [showNotifDropdown, setShowNotifDropdown] = useState<boolean>(false);
   const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [headerMetrics, setHeaderMetrics] = useState<{ totalPatients: number; onlineNodesCount: number; totalNodesCount?: number } | null>(null);
 
   const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const data = await api.getMetrics();
+        if (data) setHeaderMetrics(data);
+      } catch { /* ignore */ }
+    };
+    fetchSummary();
+    const timer = setInterval(fetchSummary, 15000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -89,11 +102,17 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-md">
           <Users className="w-4 h-4 text-teal-600" />
-          <span>Patients: <strong className="text-slate-900">{patientCount}</strong></span>
+          <span>Patients: <strong className="text-slate-900">{patientCount > 0 ? patientCount : (headerMetrics?.totalPatients ?? 0)}</strong></span>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 rounded-md">
           <Cpu className="w-4 h-4 text-sky-600" />
-          <span>Nodes: <strong className="text-slate-900">42 Edge / 8 Fog</strong></span>
+          <span>
+            Nodes: <strong className="text-slate-900">
+              {headerMetrics?.onlineNodesCount != null
+                ? `${headerMetrics.onlineNodesCount} / ${headerMetrics.totalNodesCount ?? headerMetrics.onlineNodesCount} Edge Online`
+                : '— Edge'}
+            </strong>
+          </span>
         </div>
         {unreadCount > 0 && (
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-800 font-bold rounded-md animate-pulse border border-amber-200">

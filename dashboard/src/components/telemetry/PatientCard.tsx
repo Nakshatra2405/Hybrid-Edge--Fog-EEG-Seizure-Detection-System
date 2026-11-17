@@ -119,7 +119,7 @@ export const PatientCard: React.FC<PatientCardProps> = ({
           <span className="text-[9px] text-slate-400 uppercase flex items-center gap-1">
             <Zap className="w-3 h-3 text-teal-400" /> Latency
           </span>
-          <span className="font-bold text-sm text-teal-200">4.2 <span className="text-[9px] text-teal-400">ms</span></span>
+          <span className="font-bold text-sm text-teal-200">{p.vitals.edgeLatencyMs ?? 4.2} <span className="text-[9px] text-teal-400">ms</span></span>
         </div>
 
         <div className="flex flex-col items-center">

@@ -11,8 +11,9 @@ using EegSeizureBackend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Add Controllers & Swagger
+// 1. Add Controllers, HttpClient & Swagger
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

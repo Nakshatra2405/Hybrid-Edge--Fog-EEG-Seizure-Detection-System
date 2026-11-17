@@ -1,0 +1,106 @@
+name: NeuroWatch AI — Model Retraining & INT8 Quantization
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "Target Model Version Name (e.g. AISeizureNet-v4.9-int8.tflite)"
+        required: true
+        default: "AISeizureNet-v4.9-int8.tflite"
+        type: string
+      model_id:
+        description: "Backend PostgreSQL AiModel UUID (auto-populated by API dispatch)"
+        required: false
+        default: ""
+        type: string
+      epochs:
+        description: "Number of TensorFlow training epochs"
+        required: false
+        default: "8"
+        type: string
+      approved_samples:
+        description: "Count of Doctor-approved clinical EEG sessions"
+        required: false
+        default: "14"
+        type: string
+      callback_url:
+        description: "Optional public backend base URL for completion webhook"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  retrain-and-quantize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "ml/requirements.txt"
+
+      - name: Install TensorFlow & ML dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ml/requirements.txt pandas
+
+      - name: Run TensorFlow Retraining, Evaluation & INT8 Quantization
+        env:
+          PIPELINE_SECRET: ${{ secrets.NEUROWATCH_PIPELINE_SECRET }}
+          PYTHONPATH: .
+        run: |
+          python -m ml.src.ci_retrain \
+            --version-name "${{ inputs.version_name }}" \
+            --model-id "${{ inputs.model_id }}" \
+            --epochs "${{ inputs.epochs }}" \
+            --approved-samples "${{ inputs.approved_samples }}" \
+            --callback-url "${{ inputs.callback_url }}"
+
+      - name: Publish Training & Quantization Summary
+        run: |
+          python - << 'EOF'
+          import json, os
+          with open("ml/reports/ci_training_result.json", "r") as f:
+              r = json.load(f)
+          summary = os.environ["GITHUB_STEP_SUMMARY"]
+          with open(summary, "a") as s:
+              s.write(f"## 🧠 Model Retrained: `{r['versionName']}`\n\n")
+              s.write("| Metric | Value |\n|---|---|\n")
+              s.write(f"| Accuracy | **{r['accuracy']}%** |\n")
+              s.write(f"| Precision | **{r['precision']}%** |\n")
+              s.write(f"| Sensitivity (Recall) | **{r['recall']}%** |\n")
+              s.write(f"| F1 Score | **{r['f1Score']}%** |\n")
+              s.write(f"| INT8 Model Size | `{r['int8SizeKb']} KB` |\n")
+              s.write(f"| Quantization Parity | `{'PASS' if r['parityPassed'] else 'FAIL'}` (MAE={r['parityMae']}) |\n")
+              s.write(f"| Confusion Matrix (TP/FP/TN/FN) | `{r['truePositive']} / {r['falsePositive']} / {r['trueNegative']} / {r['falseNegative']}` |\n")
+          EOF
+
+      - name: Upload Evaluation Metrics JSON Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-training-metrics
+          path: |
+            ml/reports/ci_training_result.json
+            ml/reports/uci_test_report.json
+          retention-days: 30
+
+      - name: Upload Quantized TFLite & Arduino C Header Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-quantized-model
+          path: |
+            ml/models/uci_model_int8.tflite
+            ml/models/uci_model_float.tflite
+            ml/models/uci_model_data.h
+            ml/models/uci_best_model.keras
+            edge/firmware/Nano33_SeizureClassifier/uci_model_data.h
+          retention-days: 30
