@@ -15,6 +15,7 @@ from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import serial
 import serial.tools.list_ports
+import urllib.request
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -213,6 +214,27 @@ def serial_worker():
                 azure_client.send_message(msg)
             except Exception:
                 pass
+
+        # Forward to Local Hospital Backend (PostgreSQL + SignalR Live Monitoring Dashboard)
+        try:
+            local_payload = {
+                "deviceId": "EEG-Nano-BLE-01",
+                "seizureProbability": float(infer_result["probabilityPct"]) / 100.0,
+                "edgeLatencyMs": int(infer_result.get("latencyMs", 14)),
+                "batteryPercentage": 96,
+                "status": "ALERT" if infer_result["isSeizure"] else "ONLINE"
+            }
+            backend_url = os.environ.get("LOCAL_BACKEND_INGEST_URL", "http://localhost:5000/api/v1/telemetry/ingest")
+            req = urllib.request.Request(
+                backend_url,
+                data=json.dumps(local_payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req, timeout=1.5) as resp:
+                pass
+        except Exception:
+            pass
 
         time.sleep(state["stream_delay_sec"])
 

@@ -57,14 +57,14 @@ def forward_to_local_backend(telemetry_data: dict):
             method="POST"
         )
         with urllib.request.urlopen(req, timeout=3) as resp:
-            pass
+            logging.info(f" [Local Backend] Synced to dashboard (HTTP {resp.status}) -> Prob: {payload['seizureProbability']:.2f}")
     except Exception as e:
-        logging.debug(f"[Local Backend] Ingest note: {e}")
+        logging.warning(f" [Local Backend] Failed to sync to {LOCAL_BACKEND_INGEST_URL}: {e}")
 
 async def forward_to_azure(telemetry_data: dict):
     global azure_client
-    # 1. Forward to Local Hospital Backend (Immediate local fog loop)
-    forward_to_local_backend(telemetry_data)
+    # 1. Forward to Local Hospital Backend without blocking BLE/Azure event loop
+    await asyncio.to_thread(forward_to_local_backend, telemetry_data)
 
     # 2. Forward to Azure IoT Hub (Cloud continuum loop)
     if not azure_client:
