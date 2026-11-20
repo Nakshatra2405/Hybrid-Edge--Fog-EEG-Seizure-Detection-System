@@ -133,16 +133,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
           {/* Compliance Disclaimer */}
           <div className="pt-3 border-t border-slate-800 text-center">
             <p className="text-[10px] text-slate-500 leading-relaxed font-mono">
-              🔒 <strong>HIPAA & PHI Compliant Connection</strong>
+              <strong></strong>
               <br />
-              Restricted to authorized clinical healthcare personnel. All sessions are logged & audited.
+              
             </p>
           </div>
         </div>
 
         {/* Footer info */}
         <div className="text-center text-[11px] text-slate-500 font-mono">
-          <span>Edge Cluster Nodes: 42 Active | Fog Relay: Online</span>
+          <span></span>
         </div>
       </div>
     </div>

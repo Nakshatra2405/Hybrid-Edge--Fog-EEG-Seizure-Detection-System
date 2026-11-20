@@ -33,7 +33,7 @@ public class TelemetryHub : Hub
     }
 }
 
-[Authorize(Roles = "ADMIN")]
+[Authorize(Roles = "TECHNICIAN")]
 public class AlertsHub : Hub
 {
     public override async Task OnConnectedAsync()

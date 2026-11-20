@@ -283,6 +283,7 @@ export const AppContent: React.FC = () => {
                 />
               }
             />
+            <Route path="/security-ids" element={<SecurityCenterPage />} />
             <Route path="/metrics" element={<MetricsDashboardPage />} />
             <Route
               path="/settings"
@@ -343,7 +344,6 @@ export const AppContent: React.FC = () => {
               />
             )}
             {role === 'ADMIN' && <Route path="/staff-rbac" element={<StaffManagementRBACPage />} />}
-            {role === 'ADMIN' && <Route path="/security-ids" element={<SecurityCenterPage />} />}
             <Route
               path="/settings"
               element={

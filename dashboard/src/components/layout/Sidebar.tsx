@@ -25,7 +25,6 @@ export const Sidebar: React.FC = () => {
   if (role === 'ADMIN') {
     navItems = [
       { name: 'Live Monitoring', path: '/', icon: Activity },
-      { name: 'Security Center (IDS)', path: '/security-ids', icon: ShieldAlert },
       { name: 'Metrics Dashboard', path: '/metrics', icon: BarChart2 },
       { name: 'Patient Management', path: '/patients', icon: Users },
       { name: 'Patient Vitals Grid', path: '/patients-fixed', icon: UserCheck },
@@ -56,6 +55,7 @@ export const Sidebar: React.FC = () => {
       { name: 'Data Review & Samples', path: '/', icon: CheckSquare },
       { name: 'Model Training & Eval', path: '/technician-training', icon: BrainCircuit },
       { name: 'Model Upload & Edge OTA', path: '/technician-deployments', icon: UploadCloud },
+      { name: 'Security Center (IDS)', path: '/security-ids', icon: ShieldAlert },
       { name: 'Metrics Dashboard', path: '/metrics', icon: BarChart2 },
       { name: 'Settings & Config', path: '/settings', icon: Settings },
     ];

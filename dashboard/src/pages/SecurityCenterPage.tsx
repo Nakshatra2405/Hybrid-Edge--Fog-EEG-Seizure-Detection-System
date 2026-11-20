@@ -237,7 +237,7 @@ export const SecurityCenterPage: React.FC = () => {
                 NeuroShield™ Command Center
               </h1>
               <span className="px-2 py-0.5 text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/40 rounded-full">
-                ADMIN PRIVILEGED
+                TECHNICIAN PRIVILEGED
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5 font-medium">
@@ -268,9 +268,9 @@ export const SecurityCenterPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* SECTION A: SECURITY OVERVIEW CARDS                                        */}
+      {/* 1. SECURITY OVERVIEW KPI CARDS                                            */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {/* Total Incidents */}
         <div className="p-3.5 bg-slate-900/70 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
           <div className="flex items-center justify-between text-slate-400">
@@ -292,18 +292,6 @@ export const SecurityCenterPage: React.FC = () => {
           <div className="mt-2 flex items-baseline gap-2">
             <span className="text-2xl font-black text-rose-400">{summary.activeIncidents}</span>
             <span className="text-[10px] text-rose-500/80">unresolved</span>
-          </div>
-        </div>
-
-        {/* Unknown Devices */}
-        <div className="p-3.5 bg-slate-900/70 rounded-xl border border-slate-800 hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between text-amber-400">
-            <span className="text-[10px] font-bold uppercase tracking-wider">Unknown Devices</span>
-            <Radio className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="mt-2">
-            <span className="text-2xl font-black text-amber-300">{summary.unknownDevicesIntercepted}</span>
-            <p className="text-[9px] text-slate-500 mt-0.5">Unregistered MAC/ID</p>
           </div>
         </div>
 
@@ -345,7 +333,163 @@ export const SecurityCenterPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* SECTION B: INTERACTIVE ARCHITECTURE PIPELINE VISUALIZATION                */}
+      {/* 2. THREAT ANALYTICS & RATE LIMITER POLICY CONFIGURATION                   */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Left: Provenance Breakdown & Threat Categorization */}
+        <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Data Provenance & Threat Categorization
+                </h3>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-800 text-slate-300 rounded border border-slate-700">
+                Audited Sources
+              </span>
+            </div>
+
+            {/* Provenance Distribution Cards */}
+            <div className="grid grid-cols-3 gap-2.5 my-3.5">
+              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-center">
+                <span className="text-[9px] uppercase font-bold text-emerald-400 block">Physical Devices</span>
+                <p className="text-xl font-black text-white mt-1">{summary.physicalIncidents ?? 0}</p>
+                <span className="text-[8px] text-slate-500">Node-02 (Hardware)</span>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-center">
+                <span className="text-[9px] uppercase font-bold text-cyan-400 block">Simulators</span>
+                <p className="text-xl font-black text-white mt-1">{summary.simulatorIncidents ?? 0}</p>
+                <span className="text-[8px] text-slate-500">Node-01 (Simulated)</span>
+              </div>
+              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-center">
+                <span className="text-[9px] uppercase font-bold text-rose-400 block">Untrusted / Rogue</span>
+                <p className="text-xl font-black text-rose-400 mt-1">{summary.untrustedIncidents ?? 0}</p>
+                <span className="text-[8px] text-slate-500">Rogue Packets Intercepted</span>
+              </div>
+            </div>
+
+            {/* Attack Share Progress Bars */}
+            <div className="space-y-2.5 mt-4 text-xs font-mono">
+              <div>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">Replay Injections</span>
+                  <span className="text-purple-400 font-bold">{summary.replaysBlocked}</span>
+                </div>
+                <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-purple-500 h-full rounded-full transition-all"
+                    style={{ width: `${Math.min(100, (summary.replaysBlocked / Math.max(1, summary.totalIncidents)) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">Payload Tampering (HMAC)</span>
+                  <span className="text-red-400 font-bold">{summary.tamperAttemptsDetected}</span>
+                </div>
+                <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-red-500 h-full rounded-full transition-all"
+                    style={{ width: `${Math.min(100, (summary.tamperAttemptsDetected / Math.max(1, summary.totalIncidents)) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-[11px] mb-1">
+                  <span className="text-slate-400">DoS Traffic Flooding</span>
+                  <span className="text-sky-400 font-bold">{summary.floodsMitigated}</span>
+                </div>
+                <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-sky-500 h-full rounded-full transition-all"
+                    style={{ width: `${Math.min(100, (summary.floodsMitigated / Math.max(1, summary.totalIncidents)) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between font-mono">
+            <span>Clock Freshness Window: <strong className="text-white">{config?.timestampSkewSeconds ?? 60}s</strong></span>
+            <span>Auth Mode: <strong className="text-teal-400">HMAC-SHA256</strong></span>
+          </div>
+        </div>
+
+        {/* Right: Rate Limiting Token Bucket Configuration */}
+        <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-teal-400" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Token-Bucket Rate Limiter Configuration
+                </h3>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-800 text-teal-300 rounded border border-slate-700">
+                Burst-Tolerant
+              </span>
+            </div>
+
+            {/* Prototype Parameters Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-3.5">
+              <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
+                <span className="text-[9px] uppercase tracking-wider text-slate-400">Device Burst</span>
+                <p className="text-sm font-bold text-white mt-0.5">{config?.defaultBurstCapacity ?? 6.0} tokens</p>
+                <span className="text-[8px] text-slate-500">Max burst allowance</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
+                <span className="text-[9px] uppercase tracking-wider text-slate-400">Device Refill</span>
+                <p className="text-sm font-bold text-teal-300 mt-0.5">{config?.defaultRefillRate ?? 3.0} / sec</p>
+                <span className="text-[8px] text-slate-500">Replenish rate</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
+                <span className="text-[9px] uppercase tracking-wider text-slate-400">IP DoS Bucket</span>
+                <p className="text-sm font-bold text-sky-300 mt-0.5">{config?.ipBurstCapacity ?? 20.0} tokens</p>
+                <span className="text-[8px] text-slate-500">Refill {config?.ipRefillRate ?? 10.0}/s</span>
+              </div>
+              <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
+                <span className="text-[9px] uppercase tracking-wider text-slate-400">Alert Strike</span>
+                <p className="text-sm font-bold text-amber-300 mt-0.5">{config?.sustainedViolationThreshold ?? 3} strikes</p>
+                <span className="text-[8px] text-slate-500">Sustained flood trigger</span>
+              </div>
+            </div>
+
+            {/* Registered Device Profiles Table */}
+            <div className="mt-3">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">
+                Provisioned Clinical Device Profiles
+              </span>
+              <div className="space-y-1.5">
+                {(config?.registeredProfiles || [
+                  { deviceId: 'Node-01', burstCapacity: 6.0, refillRatePerSecond: 3.0, classification: 'SIMULATOR' },
+                  { deviceId: 'Node-02', burstCapacity: 6.0, refillRatePerSecond: 3.0, classification: 'PHYSICAL' },
+                ]).map((p) => (
+                  <div key={p.deviceId} className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-xs font-mono">
+                    <div className="flex items-center gap-2">
+                      <strong className="text-white">{p.deviceId}</strong>
+                      {getProvenanceBadge(p.classification)}
+                    </div>
+                    <div className="text-[11px] text-slate-400">
+                      Cap: <span className="text-teal-300 font-bold">{p.burstCapacity}</span> | Refill: <span className="text-teal-300 font-bold">{p.refillRatePerSecond}/s</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 p-2.5 rounded-lg bg-amber-950/30 border border-amber-800/40 text-[10px] text-amber-300/90 leading-relaxed font-sans">
+            <strong>Prototype Demo Configuration:</strong> Rate limit thresholds and refill rates are configured with conservative prototype values for laboratory evaluation. In dense clinical ICU deployments, refill rates and burst capacities are tuned according to multi-channel montage transmission density.
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 3. INTERACTIVE ARCHITECTURE PIPELINE VISUALIZATION                        */}
       {/* ========================================================================= */}
       <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 shadow-2xl relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-800/80">
@@ -365,7 +509,7 @@ export const SecurityCenterPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Pipeline Diagram (SVG / Flex Layout) */}
+        {/* Pipeline Diagram */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-stretch relative my-2">
           {/* Node 1: Edge Device */}
           <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex flex-col justify-between">
@@ -398,7 +542,7 @@ export const SecurityCenterPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Node 3: NEUROSHIELD IDS (HIGHLIGHTED STAGE BOX) */}
+          {/* Node 3: NEUROSHIELD IDS */}
           <div className={`p-3.5 rounded-xl bg-slate-950 border transition-all ${
             activeFailingStage ? 'border-rose-500 shadow-lg shadow-rose-950/60 ring-1 ring-rose-500' : 'border-teal-500/50 shadow-lg shadow-teal-950/30'
           } flex flex-col justify-between`}>
@@ -411,7 +555,6 @@ export const SecurityCenterPage: React.FC = () => {
               <p className="text-[10px] text-slate-400 mt-0.5">5 Synchronous Rule Checkpoints</p>
             </div>
 
-            {/* Stages checklist */}
             <div className="mt-2.5 space-y-1 text-[9px] font-mono">
               {[
                 { name: '1. Rate Limiting (Token Bucket)', match: 'STAGE 1: RATE LIMIT' },
@@ -482,177 +625,7 @@ export const SecurityCenterPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* SECTION C & D: RATE LIMITING CONFIG & TRAFFIC ANALYTICS                   */}
-      {/* ========================================================================= */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* SECTION D: Rate Limiting Token Bucket Configuration */}
-        <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-teal-400" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                  Sensible Token-Bucket Rate Limiter Configuration
-                </h3>
-              </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-800 text-teal-300 rounded border border-slate-700">
-                Burst-Tolerant
-              </span>
-            </div>
-
-            {/* Prototype Parameters Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-3.5">
-              <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-                <span className="text-[9px] uppercase tracking-wider text-slate-400">Device Burst</span>
-                <p className="text-sm font-bold text-white mt-0.5">{config?.defaultBurstCapacity ?? 6.0} tokens</p>
-                <span className="text-[8px] text-slate-500">Max burst allowance</span>
-              </div>
-              <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-                <span className="text-[9px] uppercase tracking-wider text-slate-400">Device Refill</span>
-                <p className="text-sm font-bold text-teal-300 mt-0.5">{config?.defaultRefillRate ?? 3.0} / sec</p>
-                <span className="text-[8px] text-slate-500">Replenish rate</span>
-              </div>
-              <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-                <span className="text-[9px] uppercase tracking-wider text-slate-400">IP DoS Bucket</span>
-                <p className="text-sm font-bold text-sky-300 mt-0.5">{config?.ipBurstCapacity ?? 20.0} tokens</p>
-                <span className="text-[8px] text-slate-500">Refill {config?.ipRefillRate ?? 10.0}/s</span>
-              </div>
-              <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800/80">
-                <span className="text-[9px] uppercase tracking-wider text-slate-400">Alert Strike</span>
-                <p className="text-sm font-bold text-amber-300 mt-0.5">{config?.sustainedViolationThreshold ?? 3} strikes</p>
-                <span className="text-[8px] text-slate-500">Sustained flood trigger</span>
-              </div>
-            </div>
-
-            {/* Registered Device Profiles Table */}
-            <div className="mt-3">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">
-                Provisioned Clinical Device Profiles
-              </span>
-              <div className="space-y-1.5">
-                {(config?.registeredProfiles || [
-                  { deviceId: 'Node-01', burstCapacity: 6.0, refillRatePerSecond: 3.0, classification: 'SIMULATOR' },
-                  { deviceId: 'Node-02', burstCapacity: 6.0, refillRatePerSecond: 3.0, classification: 'PHYSICAL' },
-                ]).map((p) => (
-                  <div key={p.deviceId} className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-xs font-mono">
-                    <div className="flex items-center gap-2">
-                      <strong className="text-white">{p.deviceId}</strong>
-                      {getProvenanceBadge(p.classification)}
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      Cap: <span className="text-teal-300 font-bold">{p.burstCapacity}</span> | Refill: <span className="text-teal-300 font-bold">{p.refillRatePerSecond}/s</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Prototype Demo Honest Disclaimer */}
-          <div className="mt-4 p-2.5 rounded-lg bg-amber-950/30 border border-amber-800/40 text-[10px] text-amber-300/90 leading-relaxed font-sans">
-            <strong>Prototype Demo Configuration:</strong> Rate limit thresholds and refill rates are configured with conservative prototype values for laboratory evaluation. In dense clinical ICU deployments, refill rates and burst capacities are tuned according to multi-channel montage transmission density.
-          </div>
-        </div>
-
-        {/* SECTION C: Provenance Breakdown & Threat Analytics */}
-        <div className="bg-slate-900/80 rounded-2xl border border-slate-800 p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-cyan-400" />
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                  Data Provenance & Threat Categorization
-                </h3>
-              </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-800 text-slate-300 rounded border border-slate-700">
-                Audited Sources
-              </span>
-            </div>
-
-            {/* Provenance Distribution Cards */}
-            <div className="grid grid-cols-3 gap-2.5 my-3.5">
-              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-center">
-                <span className="text-[9px] uppercase font-bold text-emerald-400 block">Physical Devices</span>
-                <p className="text-xl font-black text-white mt-1">{summary.physicalIncidents ?? 0}</p>
-                <span className="text-[8px] text-slate-500">Node-02 (Hardware)</span>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-center">
-                <span className="text-[9px] uppercase font-bold text-cyan-400 block">Simulators</span>
-                <p className="text-xl font-black text-white mt-1">{summary.simulatorIncidents ?? 0}</p>
-                <span className="text-[8px] text-slate-500">Node-01 (Simulated)</span>
-              </div>
-              <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-center">
-                <span className="text-[9px] uppercase font-bold text-rose-400 block">Untrusted / Rogue</span>
-                <p className="text-xl font-black text-rose-400 mt-1">{summary.untrustedIncidents ?? summary.unknownDevicesIntercepted}</p>
-                <span className="text-[8px] text-slate-500">Rogue Packets Intercepted</span>
-              </div>
-            </div>
-
-            {/* Attack Share Progress Bars */}
-            <div className="space-y-2 mt-4 text-xs font-mono">
-              <div>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-slate-400">Unknown Devices</span>
-                  <span className="text-amber-400 font-bold">{summary.unknownDevicesIntercepted}</span>
-                </div>
-                <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-amber-500 h-full rounded-full transition-all"
-                    style={{ width: `${Math.min(100, (summary.unknownDevicesIntercepted / Math.max(1, summary.totalIncidents)) * 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-slate-400">Replay Injections</span>
-                  <span className="text-purple-400 font-bold">{summary.replaysBlocked}</span>
-                </div>
-                <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-purple-500 h-full rounded-full transition-all"
-                    style={{ width: `${Math.min(100, (summary.replaysBlocked / Math.max(1, summary.totalIncidents)) * 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-slate-400">Payload Tampering (HMAC)</span>
-                  <span className="text-red-400 font-bold">{summary.tamperAttemptsDetected}</span>
-                </div>
-                <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-red-500 h-full rounded-full transition-all"
-                    style={{ width: `${Math.min(100, (summary.tamperAttemptsDetected / Math.max(1, summary.totalIncidents)) * 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span className="text-slate-400">DoS Traffic Flooding</span>
-                  <span className="text-sky-400 font-bold">{summary.floodsMitigated}</span>
-                </div>
-                <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden">
-                  <div
-                    className="bg-sky-500 h-full rounded-full transition-all"
-                    style={{ width: `${Math.min(100, (summary.floodsMitigated / Math.max(1, summary.totalIncidents)) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-400 flex items-center justify-between font-mono">
-            <span>Clock Freshness Window: <strong className="text-white">{config?.timestampSkewSeconds ?? 60}s</strong></span>
-            <span>Auth Mode: <strong className="text-teal-400">HMAC-SHA256</strong></span>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================================================= */}
-      {/* SECTION E: LIVE SECURITY INCIDENTS TABLE & PACKET INSPECTOR               */}
+      {/* 4. LIVE SECURITY INCIDENTS TABLE (SCROLLABLE AUDIT LOG)                   */}
       {/* ========================================================================= */}
       <div className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
         <div className="px-5 py-4 bg-slate-950 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -670,10 +643,10 @@ export const SecurityCenterPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[420px] overflow-y-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-950/60 text-slate-400 font-semibold border-b border-slate-800 text-[11px]">
+            <thead className="sticky top-0 z-10 bg-slate-950 shadow-sm">
+              <tr className="text-slate-400 font-semibold border-b border-slate-800 text-[11px]">
                 <th className="px-4 py-3">Severity</th>
                 <th className="px-4 py-3">Attack Category</th>
                 <th className="px-4 py-3">Provenance</th>
